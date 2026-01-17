@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Dashboard System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <div class="flex min-h-screen">
+        <div class="w-64 bg-indigo-900 text-white p-6 hidden md:block">
+            <h1 class="text-2xl font-bold mb-8 italic">Dashboard TVTOTO</h1>
+            <nav>
+                <a href="#" class="block py-2.5 px-4 rounded bg-indigo-800 mb-2"><i class="fas fa-home mr-2"></i> Dashboard</a>
+                <a href="#" class="block py-2.5 px-4 rounded hover:bg-indigo-700 transition"><i class="fas fa-university mr-2"></i> Rekening</a>
+                <a href="#" class="block py-2.5 px-4 rounded hover:bg-indigo-700 transition"><i class="fas fa-history mr-2"></i> Riwayat</a>
+            </nav>
+        </div>
+
+        <div class="flex-1 p-8">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-semibold text-gray-800">Dashboard Rekening</h2>
+                <button onclick="toggleModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+                    <i class="fas fa-plus mr-2"></i>Tambah Rekening
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+                    <p class="text-gray-500 text-sm uppercase">Total Saldo</p>
+                    <p id="totalSaldo" class="text-2xl font-bold text-gray-800">Rp 0</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+                    <p class="text-gray-500 text-sm uppercase">Jumlah Bank</p>
+                    <p id="totalBank" class="text-2xl font-bold text-gray-800">0</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-50 text-gray-600 uppercase text-sm">
+                        <tr>
+                            <th class="p-4 border-b">Nama Bank</th>
+                            <th class="p-4 border-b">No. Rekening</th>
+                            <th class="p-4 border-b">Nama Rekening</th>
+                            <th class="p-4 border-b text-right">Saldo</th>
+                            <th class="p-4 border-b text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="text-gray-700">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+        <div class="bg-white p-8 rounded-xl w-96 shadow-2xl">
+            <h3 class="text-xl font-bold mb-4 text-indigo-900">Input Data Rekening</h3>
+            <div class="space-y-4">
+                <input type="text" id="inputBank" placeholder="Nama Bank (BCA, BNI...)" class="w-full p-2 border rounded">
+                <input type="text" id="inputNoRek" placeholder="Nomor Rekening" class="w-full p-2 border rounded">
+                <input type="text" id="inputNama" placeholder="Nama Rekening" class="w-full p-2 border rounded">
+                <input type="number" id="inputSaldo" placeholder="Saldo Awal" class="w-full p-2 border rounded">
+                <div class="flex space-x-2">
+                    <button onclick="simpanData()" class="flex-1 bg-indigo-600 text-white py-2 rounded">Simpan</button>
+                    <button onclick="toggleModal()" class="flex-1 bg-gray-200 py-2 rounded">Batal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Dummy Awal
+        let dataBank = [
+            { bank: "BCA", norek: "12345678", nama: "Budi Santoso", saldo: 5000000 },
+            { bank: "Mandiri", norek: "88772233", nama: "Siti Aminah", saldo: 12500000 }
+        ];
+
+        function formatRupiah(angka) {
+            return "Rp " + new Intl.NumberFormat('id-ID').format(angka);
+        }
+
+        function renderTable() {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            let total = 0;
+
+            dataBank.forEach((item, index) => {
+                total += parseInt(item.saldo);
+                tableBody.innerHTML += `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-4 border-b font-medium text-indigo-600">${item.bank}</td>
+                        <td class="p-4 border-b">${item.norek}</td>
+                        <td class="p-4 border-b">${item.nama}</td>
+                        <td class="p-4 border-b text-right font-semibold">${formatRupiah(item.saldo)}</td>
+                        <td class="p-4 border-b text-center">
+                            <button onclick="hapusData(${index})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('totalSaldo').innerText = formatRupiah(total);
+            document.getElementById('totalBank').innerText = dataBank.length;
+        }
+
+        function toggleModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.toggle('hidden');
+        }
+
+        function simpanData() {
+            const bank = document.getElementById('inputBank').value;
+            const norek = document.getElementById('inputNoRek').value;
+            const nama = document.getElementById('inputNama').value;
+            const saldo = document.getElementById('inputSaldo').value;
+
+            if(bank && norek && nama && saldo) {
+                dataBank.push({ bank, norek, nama, saldo: parseInt(saldo) });
+                renderTable();
+                toggleModal();
+                // Reset form
+                document.querySelectorAll('input').forEach(i => i.value = '');
+            } else {
