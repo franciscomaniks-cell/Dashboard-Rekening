@@ -3,66 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Rekening TVTOTO</title>
+    <title>Dashboard Rekening TVTOTO - Live</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 </head>
 <body class="bg-gray-100 font-sans">
 
     <div class="flex min-h-screen">
-        <div class="w-64 bg-indigo-900 text-white p-6 hidden md:block shrink-0">
-            <h1 class="text-2xl font-bold mb-8 italic">Dashboard TVTOTO</h1>
-            <nav>
-                <a href="#" class="block py-2.5 px-4 rounded bg-indigo-800 mb-2"><i class="fas fa-home mr-2"></i> Dashboard</a>
-                <a href="#" class="block py-2.5 px-4 rounded hover:bg-indigo-700 transition"><i class="fas fa-university mr-2"></i> Rekening</a>
-                <a href="#" class="block py-2.5 px-4 rounded hover:bg-indigo-700 transition"><i class="fas fa-history mr-2"></i> Riwayat</a>
+        <div class="w-64 bg-indigo-900 text-white p-6 hidden md:block shrink-0 shadow-2xl">
+            <h1 class="text-2xl font-bold mb-8 italic text-indigo-200">Dashboard TVTOTO</h1>
+            <nav class="space-y-3">
+                <a href="#" class="block py-2.5 px-4 rounded bg-indigo-800 transition shadow-inner"><i class="fas fa-sync-alt mr-2 animate-spin-slow"></i> Auto-Update ON</a>
+                <div class="pt-4 border-t border-indigo-700 mt-4">
+                    <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-wider">Status Koneksi</p>
+                    <div id="statusIndicator" class="flex items-center text-sm text-yellow-400 mt-1">
+                        <span class="h-2 w-2 rounded-full bg-yellow-400 mr-2 animate-pulse"></span> Sinkronisasi...
+                    </div>
+                </div>
             </nav>
         </div>
 
         <div class="flex-1 p-8">
             <div class="flex justify-between items-center mb-8">
                 <div>
-                    <h2 class="text-3xl font-semibold text-gray-800">Ringkasan Rekening</h2>
-                    <p class="text-gray-500">Total data yang terdaftar dalam sistem</p>
+                    <h2 class="text-3xl font-extrabold text-gray-800 tracking-tight">Ringkasan Rekening</h2>
+                    <p class="text-gray-500">Saldo diperbarui otomatis dari Google Sheets setiap 1 menit</p>
                 </div>
-                <button onclick="toggleModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-md transition">
-                    <i class="fas fa-plus mr-2"></i>Tambah Rekening
-                </button>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
-                    <p class="text-gray-500 text-sm uppercase font-bold">Total Saldo</p>
-                    <p id="totalSaldo" class="text-2xl font-bold text-gray-800">Rp 0</p>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
-                    <p class="text-gray-500 text-sm uppercase font-bold">Jumlah Rekening</p>
-                    <p id="totalBank" class="text-2xl font-bold text-gray-800">0</p>
+                <div class="flex gap-3">
+                    <button onclick="ambilDataSaldo()" class="bg-white border border-indigo-600 text-indigo-600 px-4 py-2 rounded-lg hover:bg-indigo-50 font-bold transition shadow-sm">
+                        <i class="fas fa-redo-alt mr-2"></i>Refresh Saldo
+                    </button>
+                    <button onclick="toggleModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-md font-bold transition">
+                        <i class="fas fa-plus mr-2"></i>Tambah Rekening
+                    </button>
                 </div>
             </div>
 
-            <div class="mb-4">
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                        <i class="fas fa-search text-gray-400"></i>
-                    </span>
-                    <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Cari Nama, No. Rekening, atau Group (Contoh: G10)..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-indigo-500 relative overflow-hidden">
+                    <div class="relative z-10">
+                        <p class="text-gray-400 text-xs uppercase font-black tracking-widest">Total Saldo Terpantau</p>
+                        <p id="totalSaldo" class="text-3xl font-black text-gray-800 mt-1">Rp 0</p>
+                    </div>
+                    <i class="fas fa-wallet absolute right-[-10px] bottom-[-10px] text-gray-100 text-7xl"></i>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-green-500 relative overflow-hidden">
+                    <div class="relative z-10">
+                        <p class="text-gray-400 text-xs uppercase font-black tracking-widest">Jumlah Rekening</p>
+                        <p id="totalBank" class="text-3xl font-black text-gray-800 mt-1">0</p>
+                    </div>
+                    <i class="fas fa-university absolute right-[-10px] bottom-[-10px] text-gray-100 text-7xl"></i>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+            <div class="mb-6 relative">
+                <i class="fas fa-search absolute left-4 top-3.5 text-gray-400"></i>
+                <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Cari Nama Akun, No. Rekening, atau Bank..." 
+                class="w-full pl-12 pr-4 py-3 border-none rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 transition">
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+                <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-gray-50 text-gray-600 uppercase text-xs font-bold sticky top-0 z-10">
+                        <thead class="bg-gray-50 text-gray-400 uppercase text-[10px] font-black sticky top-0 z-10">
                             <tr>
                                 <th class="p-4 border-b">Nama Bank</th>
-                                <th class="p-4 border-b">No. Rekening</th>
-                                <th class="p-4 border-b">Nama Rekening</th>
-                                <th class="p-4 border-b text-right">Saldo</th>
+                                <th class="p-4 border-b">Informasi Akun</th>
+                                <th class="p-4 border-b text-right">Saldo Terakhir</th>
                                 <th class="p-4 border-b text-center">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody" class="text-gray-700">
+                        <tbody id="tableBody" class="divide-y divide-gray-50 text-gray-700">
                             </tbody>
                     </table>
                 </div>
@@ -70,26 +82,30 @@
         </div>
     </div>
 
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white p-8 rounded-xl w-96 shadow-2xl">
-            <h3 class="text-xl font-bold mb-4 text-indigo-900 border-b pb-2">Input Data Rekening</h3>
+    <div id="modal" class="fixed inset-0 bg-indigo-900/50 hidden backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-2xl w-96 shadow-2xl transform transition-all scale-110">
+            <h3 class="text-xl font-black mb-4 text-indigo-900 flex items-center italic">
+                <i class="fas fa-plus-circle mr-2"></i> INPUT REKENING
+            </h3>
             <div class="space-y-4">
-                <input type="text" id="inputBank" placeholder="Nama Bank (BCA, BRI...)" class="w-full p-2 border rounded focus:outline-indigo-500">
-                <input type="text" id="inputNoRek" placeholder="Nomor Rekening" class="w-full p-2 border rounded focus:outline-indigo-500">
-                <input type="text" id="inputNama" placeholder="Nama Rekening" class="w-full p-2 border rounded focus:outline-indigo-500">
-                <input type="number" id="inputSaldo" placeholder="Saldo Awal" class="w-full p-2 border rounded focus:outline-indigo-500">
-                <div class="flex space-x-2 pt-2">
-                    <button onclick="simpanData()" class="flex-1 bg-indigo-600 text-white py-2 rounded font-bold hover:bg-indigo-700">Simpan</button>
-                    <button onclick="toggleModal()" class="flex-1 bg-gray-200 py-2 rounded font-bold hover:bg-gray-300">Batal</button>
+                <input type="text" id="inputBank" placeholder="Nama Bank (BCA, BRI...)" class="w-full p-3 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-indigo-500">
+                <input type="text" id="inputNoRek" placeholder="Nomor Rekening" class="w-full p-3 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-indigo-500">
+                <input type="text" id="inputNama" placeholder="Nama Akun (Sesuai Spreadsheet)" class="w-full p-3 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-indigo-500">
+                <input type="number" id="inputSaldo" placeholder="Saldo Awal" class="w-full p-3 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-indigo-500">
+                <div class="flex space-x-3 pt-4">
+                    <button onclick="simpanData()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg">SIMPAN</button>
+                    <button onclick="toggleModal()" class="flex-1 bg-gray-100 text-gray-500 py-3 rounded-xl font-bold hover:bg-gray-200 transition">BATAL</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // DATA REKENING GABUNGAN (FULL)
+        // LINK CSV ANDA (PENTING: Ganti dengan link hasil Publish to Web anda)
+        const sheetCSVUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/pub?gid=1655913458&single=true&output=csv';
+
+        // DATA MASTER (Daftar Rekening yang Anda berikan)
         let dataBank = [
-            // Data Awal
             { bank: "OCBC", norek: "621810071939", nama: "Raisah Bt Rali", saldo: 0 },
             { bank: "OCBC", norek: "624810073756", nama: "Jerry Rand", saldo: 0 },
             { bank: "SINARMAS", norek: "0059567365", nama: "Raisah Bt Rali", saldo: 0 },
@@ -127,7 +143,6 @@
             { bank: "BCA", norek: "4080275736", nama: "EKA SUSANTI", saldo: 0 },
             { bank: "DANAMON", norek: "903687401202", nama: "Kezia Victoria Halim", saldo: 0 },
             { bank: "DANAMON", norek: "3682785617", nama: "Marchellino Alfaro", saldo: 0 },
-            // WD BARU BCA
             { bank: "BCA", norek: "2770799271", nama: "WD BARU BCA G1 / HANIKA", saldo: 0 },
             { bank: "BCA", norek: "4770265431", nama: "WD BARU BCA G2 / RACHEL INEKE PUTRI", saldo: 0 },
             { bank: "BCA", norek: "7275566039", nama: "WD BARU BCA G3 / SITI HEFTIYANAH", saldo: 0 },
@@ -186,7 +201,6 @@
             { bank: "BCA", norek: "1751291723", nama: "WD BARU BCA G62 / RIATNO", saldo: 0 },
             { bank: "BCA", norek: "8288140182", nama: "WD BARU BCA G63 / MUHAMMAD AWALLUDIN AKMAL", saldo: 0 },
             { bank: "BCA", norek: "7006734170", nama: "WD BARU BCA G64 / SRI NING MULIANI", saldo: 0 },
-            // MANDIRI & BRI & Lainnya
             { bank: "MANDIRI", norek: "1190011421540", nama: "WD MANDIRI G2 / DAVINA RAMADANI", saldo: 0 },
             { bank: "MANDIRI", norek: "1150010874842", nama: "WD MANDIRI G3 / Rifal Afrian", saldo: 0 },
             { bank: "MANDIRI", norek: "1150011255686", nama: "WD MANDIRI G4 / SURYANTO", saldo: 0 },
@@ -224,6 +238,47 @@
             { bank: "MAYBANK", norek: "8755979133", nama: "WD MAYBANK G1 / Siti Nurlaila", saldo: 0 }
         ];
 
+        // --- FUNGSI UTAMA (SINKRONISASI SALDO) ---
+        async function ambilDataSaldo() {
+            updateStatusIndicator("loading");
+            try {
+                const response = await fetch(sheetCSVUrl);
+                const dataText = await response.text();
+                
+                Papa.parse(dataText, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        cocokkanData(results.data);
+                        updateStatusIndicator("online");
+                    }
+                });
+            } catch (err) {
+                updateStatusIndicator("offline");
+                console.error("Gagal sinkronisasi");
+            }
+        }
+
+        function cocokkanData(sheetData) {
+            dataBank.forEach(bankItem => {
+                // Cari di baris manapun di sheet yang namanya mirip dengan nama di daftar kita
+                const barisCocok = sheetData.find(row => {
+                    const namaDiSheet = Object.values(row).join(" ").toUpperCase();
+                    return namaDiSheet.includes(bankItem.nama.toUpperCase());
+                });
+
+                if (barisCocok) {
+                    // Cari angka saldo di baris tersebut
+                    const saldoRaw = Object.values(barisCocok).find(val => /[0-9]{4,}/.test(val));
+                    if (saldoRaw) {
+                        bankItem.saldo = parseInt(saldoRaw.replace(/[^0-9]/g, '')) || 0;
+                    }
+                }
+            });
+            renderTable();
+        }
+
+        // --- FUNGSI UI ---
         function formatRupiah(angka) {
             return "Rp " + new Intl.NumberFormat('id-ID').format(angka);
         }
@@ -236,13 +291,19 @@
             dataToRender.forEach((item, index) => {
                 total += parseInt(item.saldo);
                 tableBody.innerHTML += `
-                    <tr class="hover:bg-indigo-50 transition border-b">
-                        <td class="p-4 font-bold text-indigo-700 uppercase text-xs">${item.bank}</td>
-                        <td class="p-4 text-sm">${item.norek}</td>
-                        <td class="p-4 text-sm font-medium uppercase">${item.nama}</td>
-                        <td class="p-4 text-right font-bold text-green-600 text-sm">${formatRupiah(item.saldo)}</td>
+                    <tr class="hover:bg-indigo-50/50 transition border-b group">
+                        <td class="p-4">
+                            <span class="bg-indigo-100 text-indigo-700 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-tighter">${item.bank}</span>
+                        </td>
+                        <td class="p-4">
+                            <p class="text-[11px] text-gray-400 font-mono tracking-tighter">${item.norek}</p>
+                            <p class="font-bold text-gray-800 uppercase text-xs">${item.nama}</p>
+                        </td>
+                        <td class="p-4 text-right">
+                            <p class="font-black ${item.saldo > 0 ? 'text-green-600' : 'text-gray-300'} text-sm">${formatRupiah(item.saldo)}</p>
+                        </td>
                         <td class="p-4 text-center">
-                            <button onclick="hapusData(${index})" class="text-red-400 hover:text-red-600 transition">
+                            <button onclick="hapusData(${index})" class="text-gray-300 hover:text-red-500 transition transform hover:scale-125">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </td>
@@ -264,9 +325,22 @@
             renderTable(filtered);
         }
 
-        function toggleModal() {
-            document.getElementById('modal').classList.toggle('hidden');
+        function updateStatusIndicator(state) {
+            const indicator = document.getElementById('statusIndicator');
+            if(state === "online") {
+                indicator.innerHTML = '<span class="h-2 w-2 rounded-full bg-green-500 mr-2"></span> Terhubung (Live)';
+                indicator.className = "flex items-center text-sm text-green-400 mt-1 font-bold";
+            } else if(state === "loading") {
+                indicator.innerHTML = '<span class="h-2 w-2 rounded-full bg-yellow-400 mr-2 animate-pulse"></span> Sinkronisasi...';
+                indicator.className = "flex items-center text-sm text-yellow-400 mt-1";
+            } else {
+                indicator.innerHTML = '<span class="h-2 w-2 rounded-full bg-red-500 mr-2"></span> Offline / Error';
+                indicator.className = "flex items-center text-sm text-red-400 mt-1";
+            }
         }
+
+        // --- FUNGSI MODAL ---
+        function toggleModal() { document.getElementById('modal').classList.toggle('hidden'); }
 
         function simpanData() {
             const bank = document.getElementById('inputBank').value;
@@ -280,19 +354,31 @@
                 toggleModal();
                 document.querySelectorAll('input').forEach(i => i.value = '');
             } else {
-                alert("Harap isi Nama Bank, No Rekening, dan Nama!");
+                alert("Lengkapi data!");
             }
         }
 
         function hapusData(index) {
-            if(confirm('Hapus data rekening ini?')) {
+            if(confirm('Hapus data ini?')) {
                 dataBank.splice(index, 1);
                 renderTable();
             }
         }
 
-        // Mulai render data
+        // JALANKAN PERTAMA KALI
         renderTable();
+        ambilDataSaldo();
+        
+        // Refresh saldo otomatis tiap 60 detik
+        setInterval(ambilDataSaldo, 60000);
+
     </script>
+    <style>
+        .animate-spin-slow { animation: spin 3s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 10px; }
+    </style>
 </body>
 </html>
