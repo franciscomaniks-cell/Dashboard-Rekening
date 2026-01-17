@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bank Dashboard System</title>
+    <title>Dashboard Rekening TVTOTO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="bg-gray-100 font-sans">
 
     <div class="flex min-h-screen">
-        <div class="w-64 bg-indigo-900 text-white p-6 hidden md:block">
+        <div class="w-64 bg-indigo-900 text-white p-6 hidden md:block shrink-0">
             <h1 class="text-2xl font-bold mb-8 italic">Dashboard TVTOTO</h1>
             <nav>
                 <a href="#" class="block py-2.5 px-4 rounded bg-indigo-800 mb-2"><i class="fas fa-home mr-2"></i> Dashboard</a>
@@ -21,107 +21,278 @@
 
         <div class="flex-1 p-8">
             <div class="flex justify-between items-center mb-8">
-                <h2 class="text-3xl font-semibold text-gray-800">Dashboard Rekening</h2>
-                <button onclick="toggleModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+                <div>
+                    <h2 class="text-3xl font-semibold text-gray-800">Ringkasan Rekening</h2>
+                    <p class="text-gray-500">Total data yang terdaftar dalam sistem</p>
+                </div>
+                <button onclick="toggleModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-md transition">
                     <i class="fas fa-plus mr-2"></i>Tambah Rekening
                 </button>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
-                    <p class="text-gray-500 text-sm uppercase">Total Saldo</p>
+                    <p class="text-gray-500 text-sm uppercase font-bold">Total Saldo</p>
                     <p id="totalSaldo" class="text-2xl font-bold text-gray-800">Rp 0</p>
                 </div>
                 <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
-                    <p class="text-gray-500 text-sm uppercase">Jumlah Bank</p>
+                    <p class="text-gray-500 text-sm uppercase font-bold">Jumlah Rekening</p>
                     <p id="totalBank" class="text-2xl font-bold text-gray-800">0</p>
                 </div>
             </div>
 
+            <div class="mb-4">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </span>
+                    <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Cari Nama, No. Rekening, atau Group (Contoh: G10)..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+
             <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-gray-50 text-gray-600 uppercase text-sm">
-                        <tr>
-                            <th class="p-4 border-b">Nama Bank</th>
-                            <th class="p-4 border-b">No. Rekening</th>
-                            <th class="p-4 border-b">Nama Rekening</th>
-                            <th class="p-4 border-b text-right">Saldo</th>
-                            <th class="p-4 border-b text-center">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="text-gray-700">
-                        </tbody>
-                </table>
+                <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50 text-gray-600 uppercase text-xs font-bold sticky top-0 z-10">
+                            <tr>
+                                <th class="p-4 border-b">Nama Bank</th>
+                                <th class="p-4 border-b">No. Rekening</th>
+                                <th class="p-4 border-b">Nama Rekening</th>
+                                <th class="p-4 border-b text-right">Saldo</th>
+                                <th class="p-4 border-b text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="text-gray-700">
+                            </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white p-8 rounded-xl w-96 shadow-2xl">
-            <h3 class="text-xl font-bold mb-4 text-indigo-900">Input Data Rekening</h3>
+            <h3 class="text-xl font-bold mb-4 text-indigo-900 border-b pb-2">Input Data Rekening</h3>
             <div class="space-y-4">
-                <input type="text" id="inputBank" placeholder="Nama Bank (BCA, BNI...)" class="w-full p-2 border rounded">
-                <input type="text" id="inputNoRek" placeholder="Nomor Rekening" class="w-full p-2 border rounded">
-                <input type="text" id="inputNama" placeholder="Nama Rekening" class="w-full p-2 border rounded">
-                <input type="number" id="inputSaldo" placeholder="Saldo Awal" class="w-full p-2 border rounded">
-                <div class="flex space-x-2">
-                    <button onclick="simpanData()" class="flex-1 bg-indigo-600 text-white py-2 rounded">Simpan</button>
-                    <button onclick="toggleModal()" class="flex-1 bg-gray-200 py-2 rounded">Batal</button>
+                <input type="text" id="inputBank" placeholder="Nama Bank (BCA, BRI...)" class="w-full p-2 border rounded focus:outline-indigo-500">
+                <input type="text" id="inputNoRek" placeholder="Nomor Rekening" class="w-full p-2 border rounded focus:outline-indigo-500">
+                <input type="text" id="inputNama" placeholder="Nama Rekening" class="w-full p-2 border rounded focus:outline-indigo-500">
+                <input type="number" id="inputSaldo" placeholder="Saldo Awal" class="w-full p-2 border rounded focus:outline-indigo-500">
+                <div class="flex space-x-2 pt-2">
+                    <button onclick="simpanData()" class="flex-1 bg-indigo-600 text-white py-2 rounded font-bold hover:bg-indigo-700">Simpan</button>
+                    <button onclick="toggleModal()" class="flex-1 bg-gray-200 py-2 rounded font-bold hover:bg-gray-300">Batal</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Data Dummy Awal
+        // DATA REKENING GABUNGAN (FULL)
         let dataBank = [
-            { bank: "BCA", norek: "12345678", nama: "Budi Santoso", saldo: 5000000 },
-            { bank: "Mandiri", norek: "88772233", nama: "Siti Aminah", saldo: 12500000 }
+            // Data Awal
+            { bank: "OCBC", norek: "621810071939", nama: "Raisah Bt Rali", saldo: 0 },
+            { bank: "OCBC", norek: "624810073756", nama: "Jerry Rand", saldo: 0 },
+            { bank: "SINARMAS", norek: "0059567365", nama: "Raisah Bt Rali", saldo: 0 },
+            { bank: "SINAR MAS", norek: "0018464268", nama: "TUTI SAHRIYATUN", saldo: 0 },
+            { bank: "SINARMAS", norek: "0059632086", nama: "Asha Intan Permatasari", saldo: 0 },
+            { bank: "DANAMON", norek: "3690919737", nama: "Hendra", saldo: 0 },
+            { bank: "DANAMON", norek: "903691375012", nama: "UMAS", saldo: 0 },
+            { bank: "DANAMON", norek: "3692115276", nama: "HANI SITI WAHYUNI", saldo: 0 },
+            { bank: "BCA", norek: "1940533356", nama: "Billy Tanjung Kurniawan", saldo: 0 },
+            { bank: "BCA", norek: "5781176851", nama: "Idris Sardi", saldo: 0 },
+            { bank: "BCA", norek: "0663529428", nama: "Adellia Citra", saldo: 0 },
+            { bank: "BCA", norek: "7120806232", nama: "Rahman Fauzan Oktora", saldo: 0 },
+            { bank: "BNI", norek: "1926659556", nama: "Ujang Suparman", saldo: 0 },
+            { bank: "BNI", norek: "1821381905", nama: "ALVIN NUARI", saldo: 0 },
+            { bank: "BNI", norek: "1984533769", nama: "Irma Yunita", saldo: 0 },
+            { bank: "MANDIRI", norek: "1060020111673", nama: "Fandy Ramadhan", saldo: 0 },
+            { bank: "MANDIRI", norek: "1150010841072", nama: "Muhamad Ramdhan Saputra", saldo: 0 },
+            { bank: "MANDIRI", norek: "1150010841973", nama: "Wahidin", saldo: 0 },
+            { bank: "MANDIRI", norek: "1630011517151", nama: "M. Encep Juliana", saldo: 0 },
+            { bank: "MANDIRI", norek: "1050021291152", nama: "Abdul Akbar", saldo: 0 },
+            { bank: "MANDIRI", norek: "1560025221336", nama: "Dede", saldo: 0 },
+            { bank: "MANDIRI", norek: "1190012025357", nama: "FATHAN FARISAN", saldo: 0 },
+            { bank: "MANDIRI", norek: "1110024376150", nama: "Irwan firmansyah", saldo: 0 },
+            { bank: "MANDIRI", norek: "1110024362895", nama: "Yoniko Samura Narazhaki", saldo: 0 },
+            { bank: "MANDIRI", norek: "1150010412486", nama: "Nurlindawati", saldo: 0 },
+            { bank: "BRI", norek: "224801006440509", nama: "Susanto", saldo: 0 },
+            { bank: "BRI", norek: "370501002173501", nama: "Faizah", saldo: 0 },
+            { bank: "BRI", norek: "384801022008500", nama: "Vito Radiansah", saldo: 0 },
+            { bank: "BCA", norek: "7125821189", nama: "Ahmad rifaldi", saldo: 0 },
+            { bank: "BCA", norek: "842477920", nama: "BENTAR PUTRA PRATAMA", saldo: 0 },
+            { bank: "BRI", norek: "041801022619503", nama: "Ferdi alexander", saldo: 0 },
+            { bank: "BCA", norek: "4931010845", nama: "Heni Parantina", saldo: 0 },
+            { bank: "BCA", norek: "0955074161", nama: "Lia Kusmiati", saldo: 0 },
+            { bank: "BCA", norek: "4931010870", nama: "Sanah", saldo: 0 },
+            { bank: "BCA", norek: "4080275736", nama: "EKA SUSANTI", saldo: 0 },
+            { bank: "DANAMON", norek: "903687401202", nama: "Kezia Victoria Halim", saldo: 0 },
+            { bank: "DANAMON", norek: "3682785617", nama: "Marchellino Alfaro", saldo: 0 },
+            // WD BARU BCA
+            { bank: "BCA", norek: "2770799271", nama: "WD BARU BCA G1 / HANIKA", saldo: 0 },
+            { bank: "BCA", norek: "4770265431", nama: "WD BARU BCA G2 / RACHEL INEKE PUTRI", saldo: 0 },
+            { bank: "BCA", norek: "7275566039", nama: "WD BARU BCA G3 / SITI HEFTIYANAH", saldo: 0 },
+            { bank: "BCA", norek: "3120967893", nama: "WD BARU BCA G4 / Inzaghi", saldo: 0 },
+            { bank: "BCA", norek: "0322713337", nama: "WD BARU BCA G5 / Gusnimar", saldo: 0 },
+            { bank: "BCA", norek: "6313017261", nama: "WD BARU BCA G7 / MUHAMMAD ABIZAL", saldo: 0 },
+            { bank: "BCA", norek: "2320743829", nama: "WD BARU BCA G8 / SURYA DITA RAHMATUL AKBAR", saldo: 0 },
+            { bank: "BCA", norek: "2620246002", nama: "WD BARU BCA G10 / TERRA INGGIT HERMAWAN", saldo: 0 },
+            { bank: "BCA", norek: "5320274798", nama: "WD BARU BCA G12 / ENTIK SUPARMAN", saldo: 0 },
+            { bank: "BCA", norek: "5860564442", nama: "WD BARU BCA G13 / MUHAMAD RIZKY", saldo: 0 },
+            { bank: "BCA", norek: "0031438801", nama: "WD BARU BCA G14 / KHESYA ALEYA PUTRI", saldo: 0 },
+            { bank: "BCA", norek: "3110139623", nama: "WD BARU BCA G15 / M. DANI ABDUL MANAP", saldo: 0 },
+            { bank: "BCA", norek: "0010824427", nama: "WD BARU BCA G16 / ROBBY KUSUMA", saldo: 0 },
+            { bank: "BCA", norek: "0740187309", nama: "WD BARU BCA G17 / RIZKI APRIADI", saldo: 0 },
+            { bank: "BCA", norek: "7680835416", nama: "WD BARU BCA G18 / MARTHEN JEVERSON DJAWE MONE", saldo: 0 },
+            { bank: "BCA", norek: "1790386759", nama: "WD BARU BCA G20 / Suhaeriah", saldo: 0 },
+            { bank: "BCA", norek: "1790387275", nama: "WD BARU BCA G21 / Iwan", saldo: 0 },
+            { bank: "BCA", norek: "2290700895", nama: "WD BARU BCA G22 / AHMAD SYAUKI", saldo: 0 },
+            { bank: "BCA", norek: "4670456922", nama: "WD BARU BCA G23 / RAFLY FADILLAH", saldo: 0 },
+            { bank: "BCA", norek: "2453648117", nama: "WD BARU BCA G24 / WIKA ISMAWATII", saldo: 0 },
+            { bank: "BCA", norek: "0020325941", nama: "WD BARU BCA G25 / GUSTIAN", saldo: 0 },
+            { bank: "BCA", norek: "5781171892", nama: "WD BARU BCA G26 / APRILIANTO", saldo: 0 },
+            { bank: "BCA", norek: "6087026304", nama: "WD BARU BCA G27 / Saeful Anwar", saldo: 0 },
+            { bank: "BCA", norek: "4871057936", nama: "WD BARU BCA G28 / Irham Permana Solehudin", saldo: 0 },
+            { bank: "BCA", norek: "4120398186", nama: "WD BARU BCA G29 / HAMDAN", saldo: 0 },
+            { bank: "BCA", norek: "7655625119", nama: "WD BARU BCA G30 / IRWAN KURNIAWAN", saldo: 0 },
+            { bank: "BCA", norek: "4120398526", nama: "WD BARU BCA G31 / ARVAN AVANDI", saldo: 0 },
+            { bank: "BCA", norek: "5411607802", nama: "WD BARU BCA G32 / Muhaddad", saldo: 0 },
+            { bank: "BCA", norek: "4871055585", nama: "WD BARU BCA G33 / Muhammad Noerchalik", saldo: 0 },
+            { bank: "BCA", norek: "1610170869", nama: "WD BARU BCA G34 / Muhammad Khairul Ummam", saldo: 0 },
+            { bank: "BCA", norek: "7030454558", nama: "WD BARU BCA G36 / SUGENG WIDODO", saldo: 0 },
+            { bank: "BCA", norek: "6920300063", nama: "WD BARU BCA G37 / MISDA", saldo: 0 },
+            { bank: "BCA", norek: "2453647561", nama: "WD BARU BCA G38 / ROHILAH", saldo: 0 },
+            { bank: "BCA", norek: "4810368697", nama: "WD BARU BCA G39 / DAVIEN JOE WIJAYA", saldo: 0 },
+            { bank: "BCA", norek: "5411606288", nama: "WD BARU BCA G40 / NURHADI", saldo: 0 },
+            { bank: "BCA", norek: "5195214333", nama: "WD BARU BCA G41 / EFI REFLINI", saldo: 0 },
+            { bank: "BCA", norek: "8011098258", nama: "WD BARU BCA G42 / RANI SYAFRINA", saldo: 0 },
+            { bank: "BCA", norek: "6920300209", nama: "WD BARU BCA G43 / NURASIAH", saldo: 0 },
+            { bank: "BCA", norek: "5885270244", nama: "WD BARU BCA G44 / DEVIN FERNANDO", saldo: 0 },
+            { bank: "BCA", norek: "2530408348", nama: "WD BARU BCA G45 / AHMAD ALTHOF", saldo: 0 },
+            { bank: "BCA", norek: "0690669722", nama: "WD BARU BCA G46 / Mafiyah", saldo: 0 },
+            { bank: "BCA", norek: "0562522768", nama: "WD BARU BCA G47 / ALVIN SULHAN HADI", saldo: 0 },
+            { bank: "BCA", norek: "6085042339", nama: "WD BARU BCA G48 / AKHMAD GHIFARI AKBAR", saldo: 0 },
+            { bank: "BCA", norek: "8780524589", nama: "WD BARU BCA G49 / Illham Alamsyah", saldo: 0 },
+            { bank: "BCA", norek: "7680844512", nama: "WD BARU BCA G50 / YULIANA", saldo: 0 },
+            { bank: "BCA", norek: "7680843931", nama: "WD BARU BCA G51 / EKARIANSYAH HIDAYAT", saldo: 0 },
+            { bank: "BCA", norek: "0010828023", nama: "WD BARU BCA G52 / LESMANA", saldo: 0 },
+            { bank: "BCA", norek: "5411663737", nama: "WD BARU BCA G53 / LIF IFADILAH", saldo: 0 },
+            { bank: "BCA", norek: "7131809968", nama: "WD BARU BCA G55 / ROSITA", saldo: 0 },
+            { bank: "BCA", norek: "7560501441", nama: "WD BARU BCA G56 / WARNIAH", saldo: 0 },
+            { bank: "BCA", norek: "3420783166", nama: "WD BARU BCA G57 / RAMA SETIADI", saldo: 0 },
+            { bank: "BCA", norek: "4160830366", nama: "WD BARU BCA G58 / FITRI NURJANAH", saldo: 0 },
+            { bank: "BCA", norek: "2453716031", nama: "WD BARU BCA G59 / RIFAL HERIANA", saldo: 0 },
+            { bank: "BCA", norek: "1790403432", nama: "WD BARU BCA G60 / MUHAMAT ARDIANSYAH", saldo: 0 },
+            { bank: "BCA", norek: "1751292550", nama: "WD BARU BCA G61 / Mega Alas Tina Wati", saldo: 0 },
+            { bank: "BCA", norek: "1751291723", nama: "WD BARU BCA G62 / RIATNO", saldo: 0 },
+            { bank: "BCA", norek: "8288140182", nama: "WD BARU BCA G63 / MUHAMMAD AWALLUDIN AKMAL", saldo: 0 },
+            { bank: "BCA", norek: "7006734170", nama: "WD BARU BCA G64 / SRI NING MULIANI", saldo: 0 },
+            // MANDIRI & BRI & Lainnya
+            { bank: "MANDIRI", norek: "1190011421540", nama: "WD MANDIRI G2 / DAVINA RAMADANI", saldo: 0 },
+            { bank: "MANDIRI", norek: "1150010874842", nama: "WD MANDIRI G3 / Rifal Afrian", saldo: 0 },
+            { bank: "MANDIRI", norek: "1150011255686", nama: "WD MANDIRI G4 / SURYANTO", saldo: 0 },
+            { bank: "MANDIRI", norek: "1630014077211", nama: "WD MANDIRI G5 / TBMULYANA", saldo: 0 },
+            { bank: "MANDIRI", norek: "1180014679384", nama: "WD MANDIRI G6 / Nur hayati", saldo: 0 },
+            { bank: "BRI", norek: "121001003000530", nama: "WD BRI G1 / INDRA PUTRA JAYA", saldo: 0 },
+            { bank: "BRI", norek: "036801079333503", nama: "WD BRI G2 / I Wayan Wardana", saldo: 0 },
+            { bank: "BRI", norek: "086301004767507", nama: "WD BRI G3 / CHINTYA CIKAL NURSAID", saldo: 0 },
+            { bank: "BRI", norek: "385401005401504", nama: "WD BRI G4 / Febri Nurfitri Ramadhani", saldo: 0 },
+            { bank: "BRI", norek: "529601007842508", nama: "WD BRI G5 / NATALDO K.P, GULO", saldo: 0 },
+            { bank: "BRI", norek: "040401020446531", nama: "WD BRI G7 / MANGARA JOYAKHIN SIMANJUNTAK", saldo: 0 },
+            { bank: "BRI", norek: "133301010153508", nama: "WD BRI G8 / RIO EL FAHMIE LIZAM", saldo: 0 },
+            { bank: "BRI", norek: "040401067487506", nama: "WD BRI G9 / CUT MEUTHIA RAHMADHINA", saldo: 0 },
+            { bank: "BRI", norek: "529601007841502", nama: "WD BRI G10 / GABRIEL IMMANUEL SIBAGARIAN", saldo: 0 },
+            { bank: "BRI", norek: "033601159160506", nama: "WD BRI G11 / ERDIO RAVA DZHWAN", saldo: 0 },
+            { bank: "BRI", norek: "529601007850501", nama: "WD BRI G12 / FELLY YOSAFAT SIHOMBING", saldo: 0 },
+            { bank: "BRI", norek: "529601007838509", nama: "WD BRI G13 / MICHAEL JUNIOR HUTAGAOL", saldo: 0 },
+            { bank: "BRI", norek: "040401068331504", nama: "WD BRI G14 / ERWIN HUTABARAT", saldo: 0 },
+            { bank: "BNI", norek: "1924606390", nama: "WD BNI / G2 Dede Hardiansyah", saldo: 0 },
+            { bank: "BNI", norek: "1924233315", nama: "WD BNI / G3 Ujang", saldo: 0 },
+            { bank: "BNI", norek: "1924651785", nama: "WD BNI / G4 Eka Sofiana", saldo: 0 },
+            { bank: "BNI", norek: "1951788626", nama: "WD BNI / G5 RISMAWATI", saldo: 0 },
+            { bank: "BNI", norek: "1958533545", nama: "WD BNI / G6 BAGAS ARIA TRISNA", saldo: 0 },
+            { bank: "BNI", norek: "1958554963", nama: "WD BNI / G7 VITO PRAMANA SAPUTRA", saldo: 0 },
+            { bank: "BNI", norek: "1958554384", nama: "WD BNI / G8 SURYA WIJAYA", saldo: 0 },
+            { bank: "BNI", norek: "1992948425", nama: "WD BNI / G9 SUNARYA", saldo: 0 },
+            { bank: "BNI", norek: "1992953999", nama: "WD BNI / G10 KEVIN MAULANA LUBIS", saldo: 0 },
+            { bank: "BNI", norek: "1992980672", nama: "WD BNI / G11 MEMES FIRA DWIYANA", saldo: 0 },
+            { bank: "CIMB", norek: "708197093600", nama: "WD CIMB G1 / CECAR SARAMBU KUSUMO SUNDUN", saldo: 0 },
+            { bank: "CIMB", norek: "708256271300", nama: "WD CIMB G2 / DWI GILANG RAMADHAN", saldo: 0 },
+            { bank: "CIMB", norek: "708355880900", nama: "WD CIMB G3 / Erni Kisdiana", saldo: 0 },
+            { bank: "CIMB", norek: "708465826600", nama: "WD CIMB G4 / FADILLA CHAIRUNNISA", saldo: 0 },
+            { bank: "DANAMON", norek: "3693534160", nama: "WD DANAMON G1 / QOUBUS AKBAR ZAHRAN", saldo: 0 },
+            { bank: "DANAMON", norek: "903693140786", nama: "WD DANAMON G2 / EKA YUNI PERTIWI", saldo: 0 },
+            { bank: "MAYBANK", norek: "8755979133", nama: "WD MAYBANK G1 / Siti Nurlaila", saldo: 0 }
         ];
 
         function formatRupiah(angka) {
             return "Rp " + new Intl.NumberFormat('id-ID').format(angka);
         }
 
-        function renderTable() {
+        function renderTable(dataToRender = dataBank) {
             const tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = '';
             let total = 0;
 
-            dataBank.forEach((item, index) => {
+            dataToRender.forEach((item, index) => {
                 total += parseInt(item.saldo);
                 tableBody.innerHTML += `
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="p-4 border-b font-medium text-indigo-600">${item.bank}</td>
-                        <td class="p-4 border-b">${item.norek}</td>
-                        <td class="p-4 border-b">${item.nama}</td>
-                        <td class="p-4 border-b text-right font-semibold">${formatRupiah(item.saldo)}</td>
-                        <td class="p-4 border-b text-center">
-                            <button onclick="hapusData(${index})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                    <tr class="hover:bg-indigo-50 transition border-b">
+                        <td class="p-4 font-bold text-indigo-700 uppercase text-xs">${item.bank}</td>
+                        <td class="p-4 text-sm">${item.norek}</td>
+                        <td class="p-4 text-sm font-medium uppercase">${item.nama}</td>
+                        <td class="p-4 text-right font-bold text-green-600 text-sm">${formatRupiah(item.saldo)}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="hapusData(${index})" class="text-red-400 hover:text-red-600 transition">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
                         </td>
                     </tr>
                 `;
             });
 
             document.getElementById('totalSaldo').innerText = formatRupiah(total);
-            document.getElementById('totalBank').innerText = dataBank.length;
+            document.getElementById('totalBank').innerText = dataToRender.length;
+        }
+
+        function searchTable() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = dataBank.filter(item => 
+                item.nama.toLowerCase().includes(input) || 
+                item.norek.includes(input) || 
+                item.bank.toLowerCase().includes(input)
+            );
+            renderTable(filtered);
         }
 
         function toggleModal() {
-            const modal = document.getElementById('modal');
-            modal.classList.toggle('hidden');
+            document.getElementById('modal').classList.toggle('hidden');
         }
 
         function simpanData() {
             const bank = document.getElementById('inputBank').value;
             const norek = document.getElementById('inputNoRek').value;
             const nama = document.getElementById('inputNama').value;
-            const saldo = document.getElementById('inputSaldo').value;
+            const saldo = document.getElementById('inputSaldo').value || 0;
 
-            if(bank && norek && nama && saldo) {
-                dataBank.push({ bank, norek, nama, saldo: parseInt(saldo) });
+            if(bank && norek && nama) {
+                dataBank.unshift({ bank, norek, nama, saldo: parseInt(saldo) });
                 renderTable();
                 toggleModal();
-                // Reset form
                 document.querySelectorAll('input').forEach(i => i.value = '');
             } else {
+                alert("Harap isi Nama Bank, No Rekening, dan Nama!");
+            }
+        }
+
+        function hapusData(index) {
+            if(confirm('Hapus data rekening ini?')) {
+                dataBank.splice(index, 1);
+                renderTable();
+            }
+        }
+
+        // Mulai render data
+        renderTable();
+    </script>
+</body>
+</html>
