@@ -2,123 +2,192 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>TVTOTO MONITORING</title>
+    <title>TVTOTO MONITORING - ULTRA v6.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        body { background-color: #0f172a; color: white; font-family: sans-serif; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        body { background-color: #020617; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
         .row-update { animation: highlight 2s ease-out; }
-        @keyframes highlight { from { background: rgba(52, 211, 153, 0.3); } to { background: transparent; } }
-        thead th { position: sticky; top: 0; background: rgba(30,41,59,0.9); z-index: 10; }
+        @keyframes highlight { 0% { background: rgba(52, 211, 153, 0.2); } 100% { background: transparent; } }
+        /* Kustom scrollbar untuk kesan premium */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
     </style>
 </head>
-<body class="p-4">
+<body class="p-4 md:p-8">
 <div class="max-w-7xl mx-auto">
-    <div class="flex justify-between items-center mb-6 glass p-6 rounded-2xl">
-        <div>
-            <h1 class="text-2xl font-bold text-indigo-400">TVTOTO <span class="text-white">ULTRA v6.0</span></h1>
-            <p id="status" class="text-xs text-slate-400 font-mono">Menghubungkan ke database...</p>
+    
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6 glass p-6 rounded-2xl shadow-2xl gap-4">
+        <div class="flex items-center gap-4">
+            <div class="h-12 w-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <span class="text-2xl font-black">TV</span>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-white">TVTOTO <span class="text-indigo-400 uppercase text-sm tracking-[0.2em] ml-1">Ultra v6.0</span></h1>
+                <p id="status" class="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-1">Sistem Inisialisasi...</p>
+            </div>
         </div>
-        <div class="text-right">
-            <p class="text-xs text-slate-400 uppercase font-bold tracking-widest">Total Asset Seluruh Bank</p>
-            <h2 id="totalAll" class="text-3xl font-black text-emerald-400">Rp 0</h2>
+        <div class="text-center md:text-right bg-slate-800/50 p-4 rounded-xl border border-white/5 min-w-[250px]">
+            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-[0.2em] mb-1">Estimated Total Assets</p>
+            <h2 id="totalAll" class="text-3xl font-black text-emerald-400 font-mono italic">Rp 0</h2>
         </div>
     </div>
 
-    <div class="mb-4 flex gap-4">
-        <input type="text" id="search" placeholder="Cari Nama atau Rekening..." class="flex-1 bg-slate-800 border border-slate-700 p-3 rounded-xl outline-none focus:border-indigo-500">
-        <button id="refreshBtn" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-3 rounded-xl font-bold transition">REFRESH DATA</button>
+    <div class="mb-6 flex flex-col md:flex-row gap-4">
+        <div class="relative flex-1">
+            <span class="absolute inset-y-0 left-4 flex items-center text-slate-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </span>
+            <input type="text" id="search" placeholder="Cari Nama, Bank, atau No Rekening..." class="w-full bg-slate-900 border border-slate-700 p-3 pl-12 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-sm">
+        </div>
+        <button id="refreshBtn" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            REFRESH DATA
+        </button>
     </div>
 
-    <div class="glass rounded-2xl overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-slate-800/50 text-slate-400 text-xs uppercase tracking-tighter">
-                    <th class="p-4">BANK</th>
-                    <th class="p-4">REKENING / NAMA</th>
-                    <th class="p-4 text-right">SALDO TERDETEKSI</th>
-                </tr>
-            </thead>
-            <tbody id="mainTable" class="divide-y divide-white/5"></tbody>
-        </table>
+    <div class="glass rounded-2xl overflow-hidden shadow-2xl border border-white/5">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-800/80 text-slate-400 text-[10px] uppercase font-bold tracking-widest border-b border-white/5">
+                        <th class="p-5">Bank Account</th>
+                        <th class="p-5">Owner Details</th>
+                        <th class="p-5 text-right">Detected Balance</th>
+                    </tr>
+                </thead>
+                <tbody id="mainTable" class="divide-y divide-white/5">
+                    </tbody>
+            </table>
+        </div>
     </div>
+    
+    <p class="text-center text-[10px] text-slate-600 mt-6 uppercase tracking-[0.3em]">© 2024 TVTOTO Management System</p>
 </div>
 
 <script>
+// 1. DATA MASTER (Pastikan semua rekening yang ingin dipantau ada di sini)
+const masterData = [
+    { bank: "OCBC", norek: "621810071939", nama: "Raisah Bt Rali", saldo: 0, updated: false },
+    { bank: "OCBC", norek: "624810073756", nama: "Jerry Rand", saldo: 0, updated: false },
+    { bank: "BCA", norek: "1940533356", nama: "Billy Tanjung", saldo: 0, updated: false },
+    { bank: "BCA", norek: "2770799271", nama: "HANIKA", saldo: 0, updated: false },
+    { bank: "MANDIRI", norek: "1060020111673", nama: "Fandy Ramadhan", saldo: 0, updated: false }
+    // Tambahkan rekening lain di sini...
+];
+
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/pub?gid=1655913458&single=true&output=csv';
-let masterData = [...masterDataOriginal]; // Data master sudah didefinisikan
 
 async function fetchData() {
     const statusEl = document.getElementById('status');
-    statusEl.innerText = "Sedang sinkronisasi...";
+    const refreshBtn = document.getElementById('refreshBtn');
+    
+    statusEl.innerText = "Syncing with Google Database...";
+    refreshBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    
     try {
         const res = await fetch(CSV_URL + '&cache=' + Math.random());
         const text = await res.text();
-        Papa.parse(text, { complete: (results) => processData(results.data) });
+        Papa.parse(text, { 
+            skipEmptyLines: true,
+            complete: (results) => processData(results.data) 
+        });
     } catch (e) {
         statusEl.innerText = "Koneksi Gagal!";
+    } finally {
+        refreshBtn.classList.remove('opacity-50', 'cursor-not-allowed');
     }
 }
 
 function processData(rows) {
     let grandTotal = 0;
+    
     masterData.forEach(acc => {
         const prevSaldo = acc.saldo;
+        
+        // Cari baris yang mengandung NOMOR REKENING atau NAMA (case insensitive)
         const findRow = rows.find(r => {
-            const str = r.join(" ").toUpperCase();
-            return str.includes(acc.norek) || str.includes(acc.nama.toUpperCase().split('/')[0].trim());
+            const combinedRowString = r.join(" ").toUpperCase();
+            return combinedRowString.includes(acc.norek) || combinedRowString.includes(acc.nama.toUpperCase());
         });
+
         if (findRow) {
-            let possibleSaldos = findRow.map(cell => {
+            let possibleSaldos = [];
+            findRow.forEach(cell => {
+                // Bersihkan karakter non-angka
                 let clean = cell.toString().replace(/[^0-9]/g, '');
-                return clean.length > 2 ? parseInt(clean) : 0;
-            }).filter(num => num > 0 && num !== parseInt(acc.norek));
+                if (clean.length >= 4) { // Asumsi saldo minimal ribuan
+                    let val = parseInt(clean);
+                    // Validasi: angka bukan nomor rekening itu sendiri
+                    if (val !== parseInt(acc.norek)) {
+                        possibleSaldos.push(val);
+                    }
+                }
+            });
+            // Ambil angka terakhir di baris tersebut (biasanya saldo di kolom kanan)
             acc.saldo = possibleSaldos.length > 0 ? possibleSaldos[possibleSaldos.length - 1] : 0;
         }
+
         if (prevSaldo !== acc.saldo) acc.updated = true;
         grandTotal += acc.saldo;
     });
+
     renderTable();
-    document.getElementById('totalAll').innerText = "Rp " + grandTotal.toLocaleString('id-ID');
-    document.getElementById('status').innerText = "Update Terakhir: " + new Date().toLocaleTimeString();
+    
+    // Update Total Animasi Sederhana
+    const totalEl = document.getElementById('totalAll');
+    totalEl.innerText = "Rp " + grandTotal.toLocaleString('id-ID');
+    
+    document.getElementById('status').innerText = "Database Terhubung: " + new Date().toLocaleTimeString();
 }
 
 function renderTable() {
     const tbody = document.getElementById('mainTable');
     tbody.innerHTML = '';
-    const fragment = document.createDocumentFragment();
+    
     masterData.forEach(acc => {
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-white/5 transition';
-        if(acc.updated) tr.classList.add('row-update');
+        tr.className = 'hover:bg-white/5 transition-all duration-300';
+        if(acc.updated) {
+            tr.classList.add('row-update');
+            acc.updated = false; // Reset status update setelah di-render
+        }
+        
         tr.innerHTML = `
-            <td class="p-4 text-xs font-bold text-indigo-400">${acc.bank}</td>
-            <td class="p-4">
-                <div class="text-sm font-bold">${acc.nama}</div>
-                <div class="text-[10px] text-slate-500 font-mono">${acc.norek}</div>
+            <td class="p-5">
+                <span class="px-2 py-1 bg-indigo-500/10 text-indigo-400 text-[10px] font-bold rounded border border-indigo-500/20">
+                    ${acc.bank}
+                </span>
             </td>
-            <td class="p-4 text-right font-mono font-bold ${acc.saldo>0?'text-emerald-400':'text-slate-600'}">
-                ${acc.saldo.toLocaleString('id-ID')}
+            <td class="p-5">
+                <div class="text-sm font-bold text-slate-200">${acc.nama}</div>
+                <div class="text-[10px] text-slate-500 font-mono mt-1 tracking-wider">${acc.norek}</div>
+            </td>
+            <td class="p-5 text-right font-mono font-bold ${acc.saldo > 0 ? 'text-emerald-400' : 'text-slate-700'}">
+                <span class="text-xs mr-1 opacity-50">Rp</span>${acc.saldo.toLocaleString('id-ID')}
             </td>
         `;
-        fragment.appendChild(tr);
-        acc.updated = false; // reset
+        tbody.appendChild(tr);
     });
-    tbody.appendChild(fragment);
 }
 
-document.getElementById('search').addEventListener('input', () => {
-    const q = document.getElementById('search').value.toUpperCase();
+// Fitur Pencarian Real-time
+document.getElementById('search').addEventListener('input', (e) => {
+    const q = e.target.value.toUpperCase();
     document.querySelectorAll('#mainTable tr').forEach(r => {
-        r.style.display = r.innerText.toUpperCase().includes(q) ? '' : 'none';
+        const isMatch = r.innerText.toUpperCase().includes(q);
+        r.style.display = isMatch ? '' : 'none';
     });
 });
 
 document.getElementById('refreshBtn').addEventListener('click', fetchData);
 
+// Auto Refresh
 fetchData();
-setInterval(fetchData, 30000); // refresh otomatis tiap 30 detik
+setInterval(fetchData, 30000); 
 </script>
 </body>
 </html>
