@@ -3,100 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LUSI TVTOTO | Financial Statement System</title>
+    <title>TVTOTO | Premium Monitoring System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap');
         
+        :root {
+            --bg-body: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --accent: #6366f1;
+        }
+
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: #fcfcfd;
-            color: #1a1a1a;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: #f8fafc;
+            min-height: 100vh;
         }
 
-        .balance-num { font-family: 'JetBrains Mono', monospace; }
-
-        .list-item {
-            transition: all 0.2s ease;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .list-item:hover {
-            background-color: #f8fafc;
-            transform: scale(1.002);
-        }
-
-        .sticky-header {
-            position: sticky;
-            top: 0;
-            z-index: 40;
-            background: rgba(255, 255, 255, 0.9);
+        .glass-panel {
+            background: var(--card-bg);
             backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .gradient-text {
-            background: linear-gradient(to right, #4f46e5, #9333ea);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .balance-font { font-family: 'JetBrains Mono', monospace; }
+
+        .row-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 4px solid transparent;
         }
+
+        .row-hover:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-left-color: var(--accent);
+            transform: translateX(4px);
+        }
+
+        .glow-active {
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+        }
+
+        .search-glow:focus {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+            border-color: var(--accent);
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
-<body class="antialiased">
+<body class="p-4 md:p-10 antialiased">
 
-    <nav class="sticky-header border-b border-slate-100">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg">
-                    <i class="fas fa-wallet text-sm"></i>
+    <div class="max-w-6xl mx-auto">
+        <header class="flex flex-col md:flex-row gap-6 mb-12 items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(99,102,241,0.5)]">
+                    <i class="fas fa-shield-halved text-2xl text-white"></i>
                 </div>
-                <h1 class="text-xl font-extrabold tracking-tight">TVTOTO<span class="text-indigo-600">.SYSTEM</span></h1>
-            </div>
-            <div class="flex items-center gap-6">
-                <div class="text-right">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Total Net Balance</p>
-                    <p id="grandTotal" class="text-xl font-extrabold text-slate-900 balance-num">Rp 0</p>
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tighter italic">TVTOTO<span class="text-indigo-400">PRO</span></h1>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em] flex items-center">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
+                        Live Core Synchronized
+                    </p>
                 </div>
             </div>
-        </div>
-    </nav>
 
-    <main class="max-w-6xl mx-auto px-6 py-8">
-        
-        <div class="flex flex-col md:flex-row justify-between items-end gap-6 mb-10">
-            <div class="w-full md:w-1/2">
-                <h2 class="text-3xl font-bold mb-2 tracking-tight">Financial <span class="gradient-text">Overview</span></h2>
-                <p class="text-slate-500 text-sm">Laporan saldo real-time untuk seluruh rekening bank terdaftar.</p>
+            <div class="glass-panel px-10 py-5 rounded-[2rem] text-center md:text-right border-indigo-500/30">
+                <p class="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Total Assets Tracked</p>
+                <h2 id="grandTotal" class="text-4xl font-extrabold text-white balance-font tracking-tighter">Rp 0</h2>
             </div>
-            
-            <div class="w-full md:w-1/3 relative">
-                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        </header>
+
+        <div class="flex flex-col md:flex-row gap-4 mb-8">
+            <div class="relative flex-grow">
+                <i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-slate-500"></i>
                 <input type="text" id="searchInput" onkeyup="filterList()" 
-                    placeholder="Search accounts..." 
-                    class="w-full pl-12 pr-4 py-3 rounded-xl bg-slate-100 border-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-sm">
+                    placeholder="Search master accounts..." 
+                    class="w-full pl-16 pr-8 py-5 rounded-2xl bg-slate-800/50 border border-slate-700 outline-none text-white font-medium search-glow transition-all">
+            </div>
+            <div class="glass-panel px-8 py-4 rounded-2xl flex items-center gap-3 text-sm font-bold">
+                <i class="fas fa-database text-indigo-400"></i>
+                <span id="activeCount" class="text-white">0</span> <span class="text-slate-400 uppercase text-[10px]">Records</span>
             </div>
         </div>
 
-        <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-            <div class="grid grid-cols-12 px-8 py-4 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                <div class="col-span-6 md:col-span-7">Account Details</div>
-                <div class="col-span-3 md:col-span-2 text-center">Status</div>
-                <div class="col-span-3 md:col-span-3 text-right">Current Balance</div>
+        <div class="glass-panel rounded-[2.5rem] overflow-hidden shadow-2xl">
+            <div class="grid grid-cols-12 px-8 py-6 bg-slate-800/30 border-b border-white/5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                <div class="col-span-7 md:col-span-8">Identity & Bank Network</div>
+                <div class="col-span-5 md:col-span-4 text-right">Liquidity / Balance</div>
             </div>
 
-            <div id="dataList">
+            <div id="dataList" class="divide-y divide-white/5">
                 </div>
         </div>
 
-        <div class="mt-8 flex justify-between items-center px-4">
-            <div class="flex items-center gap-2">
-                <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
-                <span id="statusLabel" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Syncing...</span>
+        <footer class="mt-10 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-500">
+            <p class="text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                <i class="fas fa-clock"></i> Last Update: <span id="lastUpdate" class="text-slate-300">...</span>
+            </p>
+            <div class="flex gap-4">
+                <i class="fab fa-google-drive"></i>
+                <i class="fas fa-server"></i>
+                <i class="fas fa-lock"></i>
             </div>
-            <p class="text-[10px] font-bold text-slate-300 uppercase">Automated Banking Monitor v4.0</p>
-        </div>
-    </main>
+        </footer>
+    </div>
 
     <script>
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/pub?gid=1655913458&single=true&output=csv';
@@ -112,7 +127,7 @@
                     complete: function(results) { processRows(results.data); }
                 });
             } catch (err) {
-                console.error("Connection failed");
+                console.error("API Error");
             }
         }
 
@@ -134,11 +149,7 @@
                         let saldoVal = parseInt(rawSaldo.replace(/[^0-9]/g, '')) || 0;
 
                         if (content.length > 5 && !temp.some(x => x.name === content)) {
-                            temp.push({
-                                name: content,
-                                saldo: saldoVal,
-                                bank: detectBank(content)
-                            });
+                            temp.push({ name: content, saldo: saldoVal, bank: detectBank(content) });
                             totalAll += saldoVal;
                         }
                     }
@@ -148,7 +159,8 @@
             masterData = temp.sort((a, b) => b.saldo - a.saldo);
             render(masterData);
             document.getElementById('grandTotal').innerText = formatIDR(totalAll);
-            document.getElementById('statusLabel').innerText = "Last Sync: " + new Date().toLocaleTimeString();
+            document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString('id-ID');
+            document.getElementById('activeCount').innerText = temp.length;
         }
 
         function render(data) {
@@ -158,23 +170,24 @@
             data.forEach(item => {
                 const isZero = item.saldo === 0;
                 container.innerHTML += `
-                    <div class="grid grid-cols-12 px-8 py-5 list-item items-center ${isZero ? 'opacity-40' : ''}">
-                        <div class="col-span-6 md:col-span-7 flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-[10px] font-extrabold text-indigo-600 border border-slate-100">
+                    <div class="grid grid-cols-12 px-8 py-7 row-hover items-center ${isZero ? 'opacity-30' : ''}">
+                        <div class="col-span-7 md:col-span-8 flex items-center gap-5">
+                            <div class="w-12 h-12 rounded-xl glass-panel flex items-center justify-center text-[11px] font-black text-indigo-400 border-indigo-500/20">
                                 ${item.bank.substring(0, 3)}
                             </div>
                             <div>
-                                <h4 class="font-bold text-slate-800 text-sm uppercase tracking-tight">${item.name}</h4>
-                                <p class="text-[9px] font-bold text-slate-400 tracking-widest">${item.bank} NETWORK</p>
+                                <h4 class="font-bold text-white text-sm md:text-base uppercase tracking-tight mb-1">${item.name}</h4>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">${item.bank}</span>
+                                    ${!isZero ? '<span class="w-1.5 h-1.5 bg-emerald-500 rounded-full glow-active"></span>' : ''}
+                                </div>
                             </div>
                         </div>
-                        <div class="col-span-3 md:col-span-2 text-center">
-                            <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${isZero ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-600'}">
-                                ${isZero ? 'Idle' : 'Active'}
-                            </span>
-                        </div>
-                        <div class="col-span-3 md:col-span-3 text-right">
-                            <p class="font-extrabold text-slate-900 balance-num text-sm">${formatIDR(item.saldo)}</p>
+                        <div class="col-span-5 md:col-span-4 text-right">
+                            <p class="text-lg md:text-xl font-bold text-white balance-font leading-none">${formatIDR(item.saldo)}</p>
+                            <p class="text-[9px] font-bold ${isZero ? 'text-slate-600' : 'text-emerald-500/70'} uppercase tracking-[0.2em] mt-2">
+                                ${isZero ? 'IDLE ACCOUNT' : 'LIQUID ASSET'}
+                            </p>
                         </div>
                     </div>
                 `;
@@ -202,4 +215,3 @@
     </script>
 </body>
 </html>
-
