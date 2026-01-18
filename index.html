@@ -3,156 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TVTOTO ULTRA | Precision Monitoring System</title>
+    <title>TVTOTO ULTRA | Enterprise Monitoring</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
-        
-        :root {
-            --bg-main: #020617;
-            --accent: #6366f1;
-            --danger: #ef4444;
-            --success: #10b981;
-        }
-
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: var(--bg-main); 
-            color: #f8fafc;
-            overflow: hidden;
-        }
-
+        :root { --bg: #020617; --accent: #6366f1; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: #f8fafc; overflow: hidden; }
         .mono { font-family: 'JetBrains Mono', monospace; }
-
-        /* Modern Glassmorphism */
-        .glass-panel { 
-            background: rgba(15, 23, 42, 0.6); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(255,255,255,0.05); 
-        }
-        
-        .active-glow {
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
-            border-color: rgba(99, 102, 241, 0.4);
-        }
-
-        .table-scroll { height: calc(100vh - 380px); overflow-y: auto; }
+        .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
+        .table-scroll { height: calc(100vh - 280px); overflow-y: auto; }
         .table-scroll::-webkit-scrollbar { width: 3px; }
         .table-scroll::-webkit-scrollbar-thumb { background: #334155; }
-
-        @keyframes pulse-border {
-            0% { border-color: rgba(16, 185, 129, 0.2); }
-            50% { border-color: rgba(16, 185, 129, 0.8); }
-            100% { border-color: rgba(16, 185, 129, 0.2); }
-        }
-        .sync-active { animation: pulse-border 2s infinite; }
-
-        /* Balance Change Highlight */
-        .value-up { animation: green-flash 1.5s ease; }
-        @keyframes green-flash {
-            0% { background: rgba(16, 185, 129, 0); }
-            20% { background: rgba(16, 185, 129, 0.2); }
-            100% { background: rgba(16, 185, 129, 0); }
-        }
+        .status-pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .row-update { animation: flash 1s ease-out; }
+        @keyframes flash { from { background: rgba(16, 185, 129, 0.2); } to { background: transparent; } }
     </style>
 </head>
-<body class="p-4 lg:p-8">
+<body class="p-6">
 
-    <div class="max-w-[1600px] mx-auto h-full flex flex-col gap-6">
-        
-        <header class="flex flex-wrap items-center justify-between gap-6">
-            <div class="flex items-center gap-5">
-                <div class="relative">
-                    <div class="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-500/40">
-                        <i class="fas fa-microchip text-2xl text-white"></i>
-                    </div>
-                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-[#020617] rounded-full"></div>
+    <div class="max-w-[1700px] mx-auto flex flex-col gap-6 h-full">
+        <header class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <i class="fas fa-server text-white text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-extrabold tracking-tighter">TVTOTO <span class="text-indigo-500 underline decoration-indigo-500/30">ULTRA</span></h1>
-                    <div class="flex items-center gap-3 mt-1">
-                        <span id="statusBadge" class="text-[10px] font-black uppercase tracking-[0.2em] px-2 py-0.5 bg-slate-800 text-slate-400 rounded">Engine: Ready</span>
-                        <span id="lastUpdate" class="text-[10px] mono text-slate-500">LAST SYNC: --:--:--</span>
+                    <h1 class="text-2xl font-black tracking-tighter">TVTOTO <span class="text-indigo-500">ULTRA</span></h1>
+                    <div class="flex items-center gap-2">
+                        <span id="syncStatus" class="flex items-center gap-1.5 text-[10px] font-bold text-emerald-500 uppercase">
+                            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full status-pulse"></span> System Live
+                        </span>
                     </div>
                 </div>
             </div>
 
-            <div class="flex items-center gap-4">
-                <div class="glass-panel px-6 py-3 rounded-2xl border-l-4 border-indigo-500">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Global Assets</p>
-                    <h2 id="grandTotal" class="text-2xl font-black mono text-white">Rp 0</h2>
+            <div class="flex gap-4">
+                <div class="glass px-6 py-3 rounded-2xl border-l-4 border-indigo-500">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Global Balance</p>
+                    <h2 id="totalAll" class="text-2xl font-black mono text-white">Rp 0</h2>
                 </div>
-                <button onclick="toggleModal()" class="h-14 px-8 bg-white hover:bg-indigo-50 text-slate-900 rounded-2xl font-black text-sm transition-all transform active:scale-95 flex items-center gap-3">
-                    <i class="fas fa-plus"></i> ADD TERMINAL
-                </button>
+                <div class="glass px-6 py-3 rounded-2xl border-l-4 border-emerald-500">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Active Nodes</p>
+                    <h2 id="nodeCount" class="text-2xl font-black mono text-white">0</h2>
+                </div>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 overflow-hidden">
-            
-            <div class="lg:col-span-1 flex flex-col gap-6">
-                <div class="glass-panel rounded-[2rem] p-6">
-                    <h3 class="text-xs font-black text-slate-400 uppercase mb-6 tracking-widest flex items-center justify-between">
-                        Node Statistics <i class="fas fa-chart-pie text-indigo-500"></i>
-                    </h3>
-                    <div id="bankDistribution" class="space-y-5">
-                        </div>
+        <div class="grid grid-cols-12 gap-6 overflow-hidden flex-1">
+            <div class="col-span-3 flex flex-col gap-6">
+                <div class="glass rounded-3xl p-6 overflow-hidden">
+                    <h3 class="text-xs font-black text-slate-500 uppercase mb-4 tracking-widest">Bank Network</h3>
+                    <div id="bankStats" class="space-y-4"></div>
                 </div>
-
-                <div class="glass-panel rounded-[2rem] p-6 flex-1 relative overflow-hidden group">
-                    <div class="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <h3 class="text-xs font-black text-slate-400 uppercase mb-6 tracking-widest">System Logs</h3>
-                    <div id="logs" class="space-y-3 text-[10px] mono text-slate-500 overflow-y-auto max-h-[200px] custom-scroll">
-                        <div>> Initializing precision engine...</div>
-                        <div>> Waiting for data stream...</div>
-                    </div>
+                <div class="glass rounded-3xl p-6 flex-1 overflow-hidden flex flex-col">
+                    <h3 class="text-xs font-black text-slate-500 uppercase mb-4 tracking-widest">Live Activity</h3>
+                    <div id="logs" class="text-[10px] mono text-slate-500 space-y-2 overflow-y-auto"></div>
                 </div>
             </div>
 
-            <div class="lg:col-span-3 glass-panel rounded-[2.5rem] flex flex-col overflow-hidden active-glow transition-all">
-                <div class="p-6 border-b border-white/5 flex flex-wrap items-center justify-between gap-4 bg-white/5">
-                    <div class="relative flex-1 max-w-md">
-                        <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                        <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Cari rekening atau nama..." 
-                        class="w-full bg-slate-900/50 border border-white/10 rounded-xl py-3 pl-12 pr-6 text-sm focus:outline-none focus:border-indigo-500 transition">
+            <div class="col-span-9 glass rounded-[2rem] flex flex-col overflow-hidden border border-white/5">
+                <div class="p-6 bg-white/5 border-b border-white/5 flex justify-between items-center">
+                    <div class="relative w-96">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input type="text" id="search" onkeyup="filter()" placeholder="Search terminal..." class="w-full bg-slate-950 border border-white/10 rounded-xl py-2.5 pl-12 pr-4 text-sm focus:border-indigo-500 outline-none">
                     </div>
-                    <button onclick="ambilData()" class="px-6 py-3 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 rounded-xl font-bold text-xs transition-all flex items-center gap-2">
-                        <i class="fas fa-sync"></i> REFRESH STREAM
+                    <button onclick="syncData()" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                        <i class="fas fa-sync-alt"></i> FORCE SYNC
                     </button>
                 </div>
-
                 <div class="table-scroll">
-                    <table class="w-full border-collapse">
-                        <thead class="sticky top-0 bg-[#0f172a] z-10">
-                            <tr class="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] border-b border-white/5">
-                                <th class="p-6 text-left">Node</th>
-                                <th class="p-6 text-left">Identity</th>
-                                <th class="p-6 text-right">Balance Value</th>
-                                <th class="p-6 text-center">Status</th>
+                    <table class="w-full text-left border-collapse">
+                        <thead class="sticky top-0 bg-slate-900 z-10">
+                            <tr class="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5">
+                                <th class="p-5">Bank</th>
+                                <th class="p-5">Account Name / Identity</th>
+                                <th class="p-5 text-right">Current Balance</th>
+                                <th class="p-5 text-center">Protocol</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody" class="divide-y divide-white/[0.02]">
-                            </tbody>
+                        <tbody id="mainTable" class="divide-y divide-white/[0.02]"></tbody>
                     </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden z-50 flex items-center justify-center p-6">
-        <div class="glass-panel rounded-[3rem] p-10 w-full max-w-lg shadow-2xl">
-            <h2 class="text-2xl font-black mb-6 flex items-center gap-3">
-                <i class="fas fa-plus-circle text-indigo-500"></i> Add New Node
-            </h2>
-            <div class="space-y-4">
-                <input type="text" id="inBank" placeholder="BANK NAME (BCA/BRI/ETC)" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl font-bold uppercase text-xs outline-none focus:border-indigo-500">
-                <input type="text" id="inRek" placeholder="ACCOUNT NUMBER" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl font-bold mono text-xs outline-none focus:border-indigo-500">
-                <input type="text" id="inNama" placeholder="HOLDER NAME (MUST MATCH SHEET)" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl font-bold text-xs uppercase outline-none focus:border-indigo-500">
-                <div class="flex gap-4 pt-4">
-                    <button onclick="saveNode()" class="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-black shadow-lg shadow-indigo-600/20">AUTHORIZE</button>
-                    <button onclick="toggleModal()" class="px-8 bg-slate-800 text-slate-400 py-4 rounded-xl font-bold">CANCEL</button>
                 </div>
             </div>
         </div>
@@ -160,197 +93,257 @@
 
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/pub?gid=1655913458&single=true&output=csv';
-        let nodes = [];
-        let lastGrandTotal = 0;
+        
+        // Database Data Terintegrasi
+        let masterNodes = [
+            { bank: "OCBC", norek: "621810071939", nama: "Raisah Bt Rali" },
+            { bank: "OCBC", norek: "624810073756", nama: "Jerry Rand" },
+            { bank: "SINARMAS", norek: "59567365", nama: "Raisah Bt Rali" },
+            { bank: "SINAR MAS", norek: "18464268", nama: "TUTI SAHRIYATUN" },
+            { bank: "SINARMAS", norek: "59632086", nama: "Asha Intan Permatasari" },
+            { bank: "DANAMON", norek: "3690919737", nama: "Hendra" },
+            { bank: "DANAMON", norek: "903691375012", nama: "UMAS" },
+            { bank: "DANAMON", norek: "3692115276", nama: "HANI SITI WAHYUNI" },
+            { bank: "BCA", norek: "1940533356", nama: "Billy Tanjung Kurniawan" },
+            { bank: "BCA", norek: "5781176851", nama: "Idris Sardi" },
+            { bank: "BCA", norek: "663529428", nama: "Adellia Citra" },
+            { bank: "BCA", norek: "7120806232", nama: "Rahman Fauzan Oktora" },
+            { bank: "BNI", norek: "1926659556", nama: "Ujang Suparman" },
+            { bank: "BNI", norek: "1821381905", nama: "ALVIN NUARI" },
+            { bank: "BNI", norek: "1984533769", nama: "Irma Yunita" },
+            { bank: "MANDIRI", norek: "1060020111673", nama: "Fandy Ramadhan" },
+            { bank: "MANDIRI", norek: "1150010841072", nama: "Muhamad Ramdhan Saputra" },
+            { bank: "MANDIRI", norek: "1150010841973", nama: "Wahidin" },
+            { bank: "MANDIRI", norek: "1630011517151", nama: "M. Encep Juliana" },
+            { bank: "MANDIRI", norek: "1050021291152", nama: "Abdul Akbar" },
+            { bank: "MANDIRI", norek: "1560025221336", nama: "Dede" },
+            { bank: "MANDIRI", norek: "1190012025357", nama: "FATHAN FARISAN" },
+            { bank: "MANDIRI", norek: "1110024376150", nama: "Irwan firmansyah" },
+            { bank: "MANDIRI", norek: "1110024362895", nama: "Yoniko Samura Narazhaki" },
+            { bank: "MANDIRI", norek: "1150010412486", nama: "Nurlindawati" },
+            { bank: "BRI", norek: "224801006440509", nama: "Susanto" },
+            { bank: "BRI", norek: "370501002173501", nama: "Faizah" },
+            { bank: "BRI", norek: "384801022008500", nama: "Vito Radiansah" },
+            { bank: "BCA", norek: "7125821189", nama: "Ahmad rifaldi" },
+            { bank: "BCA", norek: "842477920", nama: "BENTAR PUTRA PRATAMA" },
+            { bank: "BRI", norek: "041801022619503", nama: "Ferdi alexander" },
+            { bank: "BCA", norek: "4931010845", nama: "Heni Parantina" },
+            { bank: "BCA", norek: "0955074161", nama: "Lia Kusmiati" },
+            { bank: "BCA", norek: "4931010870", nama: "Sanah" },
+            { bank: "BCA", norek: "4080275736", nama: "EKA SUSANTI" },
+            { bank: "DANAMON", norek: "903687401202", nama: "Kezia Victoria Halim" },
+            { bank: "DANAMON", norek: "3682785617", nama: "Marchellino Alfaro" },
+            { bank: "BCA", norek: "2770799271", nama: "WD BARU BCA G1 / HANIKA" },
+            { bank: "BCA", norek: "4770265431", nama: "WD BARU BCA G2 / RACHEL INEKE PUTRI" },
+            { bank: "BCA", norek: "7275566039", nama: "WD BARU BCA G3 / SITI HEFTIYANAH" },
+            { bank: "BCA", norek: "3120967893", nama: "WD BARU BCA G4 / Inzaghi" },
+            { bank: "BCA", norek: "0322713337", nama: "WD BARU BCA G5 / Gusnimar" },
+            { bank: "BCA", norek: "6313017261", nama: "WD BARU BCA G7 / MUHAMMAD ABIZAL" },
+            { bank: "BCA", norek: "2320743829", nama: "WD BARU BCA G8 / SURYA DITA RAHMATUL AKBAR" },
+            { bank: "BCA", norek: "2620246002", nama: "WD BARU BCA G10 / TERRA INGGIT HERMAWAN" },
+            { bank: "BCA", norek: "5320274798", nama: "WD BARU BCA G12 / ENTIK SUPARMAN" },
+            { bank: "BCA", norek: "5860564442", nama: "WD BARU BCA G13 / MUHAMAD RIZKY" },
+            { bank: "BCA", norek: "0031438801", nama: "WD BARU BCA G14 / KHESYA ALEYA PUTRI" },
+            { bank: "BCA", norek: "3110139623", nama: "WD BARU BCA G15 / M. DANI ABDUL MANAP" },
+            { bank: "BCA", norek: "0010824427", nama: "WD BARU BCA G16 / ROBBY KUSUMA" },
+            { bank: "BCA", norek: "0740187309", nama: "WD BARU BCA G17 / RIZKI APRIADI" },
+            { bank: "BCA", norek: "7680835416", nama: "WD BARU BCA G18 / MARTHEN JEVERSON DJAWE MONE" },
+            { bank: "BCA", norek: "1790386759", nama: "WD BARU BCA G20 / Suhaeriah" },
+            { bank: "BCA", norek: "1790387275", nama: "WD BARU BCA G21 / Iwan" },
+            { bank: "BCA", norek: "2290700895", nama: "WD BARU BCA G22 / AHMAD SYAUKI" },
+            { bank: "BCA", norek: "4670456922", nama: "WD BARU BCA G23 / RAFLY FADILLAH" },
+            { bank: "BCA", norek: "2453648117", nama: "WD BARU BCA G24 / WIKA ISMAWATII" },
+            { bank: "BCA", norek: "0020325941", nama: "WD BARU BCA G25 / GUSTIAN" },
+            { bank: "BCA", norek: "5781171892", nama: "WD BARU BCA G26 / APRILIANTO" },
+            { bank: "BCA", norek: "6087026304", nama: "WD BARU BCA G27 / Saeful Anwar" },
+            { bank: "BCA", norek: "4871057936", nama: "WD BARU BCA G28 / Irham Permana Solehudin" },
+            { bank: "BCA", norek: "4120398186", nama: "WD BARU BCA G29 / HAMDAN" },
+            { bank: "BCA", norek: "7655625119", nama: "WD BARU BCA G30 / IRWAN KURNIAWAN" },
+            { bank: "BCA", norek: "4120398526", nama: "WD BARU BCA G31 / ARVAN AVANDI" },
+            { bank: "BCA", norek: "5411607802", nama: "WD BARU BCA G32 / Muhaddad" },
+            { bank: "BCA", norek: "4871055585", nama: "WD BARU BCA G33 / Muhammad Noerchalik" },
+            { bank: "BCA", norek: "1610170869", nama: "WD BARU BCA G34 / Muhammad Khairul Ummam" },
+            { bank: "BCA", norek: "7030454558", nama: "WD BARU BCA G36 / SUGENG WIDODO" },
+            { bank: "BCA", norek: "6920300063", nama: "WD BARU BCA G37 / MISDA" },
+            { bank: "BCA", norek: "2453647561", nama: "WD BARU BCA G38 / ROHILAH" },
+            { bank: "BCA", norek: "4810368697", nama: "WD BARU BCA G39 / DAVIEN JOE WIJAYA" },
+            { bank: "BCA", norek: "5411606288", nama: "WD BARU BCA G40 / NURHADI" },
+            { bank: "BCA", norek: "5195214333", nama: "WD BARU BCA G41 / EFI REFLINI" },
+            { bank: "BCA", norek: "8011098258", nama: "WD BARU BCA G42 / RANI SYAFRINA" },
+            { bank: "BCA", norek: "6920300209", nama: "WD BARU BCA G43 / NURASIAH" },
+            { bank: "BCA", norek: "5885270244", nama: "WD BARU BCA G44 / DEVIN FERNANDO" },
+            { bank: "BCA", norek: "2530408348", nama: "WD BARU BCA G45 / AHMAD ALTHOF" },
+            { bank: "BCA", norek: "0690669722", nama: "WD BARU BCA G46/ Mafiyah" },
+            { bank: "BCA", norek: "0562522768", nama: "WD BARU BCA G47/ ALVIN SULHAN HADI" },
+            { bank: "BCA", norek: "6085042339", nama: "WD BARU BCA G48 / AKHMAD GHIFARI AKBAR" },
+            { bank: "BCA", norek: "8780524589", nama: "WD BARU BCA G49 / Illham Alamsyah" },
+            { bank: "BCA", norek: "7680844512", nama: "WD BARU BCA G50 / YULIANA" },
+            { bank: "BCA", norek: "7680843931", nama: "WD BARU BCA G51 / EKARIANSYAH HIDAYAT" },
+            { bank: "BCA", norek: "0010828023", nama: "WD BARU BCA G52 / LESMANA" },
+            { bank: "BCA", norek: "5411663737", nama: "WD BARU BCA G53 / LIF IFADILAH" },
+            { bank: "BCA", norek: "7131809968", nama: "WD BARU BCA G55 / ROSITA" },
+            { bank: "BCA", norek: "7560501441", nama: "WD BARU BCA G56 / WARNIAH" },
+            { bank: "BCA", norek: "3420783166", nama: "WD BARU BCA G57 / RAMA SETIADI" },
+            { bank: "BCA", norek: "4160830366", nama: "WD BARU BCA G58 / FITRI NURJANAH" },
+            { bank: "BCA", norek: "2453716031", nama: "WD BARU BCA G59 / RIFAL HERIANA" },
+            { bank: "BCA", norek: "1790403432", nama: "WD BARU BCA G60 / MUHAMAT ARDIANSYAH" },
+            { bank: "BCA", norek: "1751292550", nama: "WD BARU BCA G61 / Mega Alas Tina Wati" },
+            { bank: "BCA", norek: "1751291723", nama: "WD BARU BCA G62 / RIATNO" },
+            { bank: "BCA", norek: "8288140182", nama: "WD BARU BCA G63 / MUHAMMAD AWALLUDIN AKMAL" },
+            { bank: "BCA", norek: "7006734170", nama: "WD BARU BCA G64 / SRI NING MULIANI" },
+            { bank: "MANDIRI", norek: "1190011421540", nama: "WD MANDIRI G2 / DAVINA RAMADANI" },
+            { bank: "MANDIRI", norek: "1150010874842", nama: "WD MANDIRI G3 / Rifal Afrian" },
+            { bank: "MANDIRI", norek: "1150011255686", nama: "WD MANDIRI G4 / SURYANTO" },
+            { bank: "MANDIRI", norek: "1630014077211", nama: "WD MANDIRI G5 / TBMULYANA" },
+            { bank: "MANDIRI", norek: "1180014679384", nama: "WD MANDIRI G6 / Nur hayati" },
+            { bank: "BRI", norek: "121001003000530", nama: "WD BRI G1 / INDRA PUTRA JAYA" },
+            { bank: "BRI", norek: "036801079333503", nama: "WD BRI G2 / I Wayan Wardana" },
+            { bank: "BRI", norek: "086301004767507", nama: "WD BRI G3 / CHINTYA CIKAL NURSAID" },
+            { bank: "BRI", norek: "385401005401504", nama: "WD BRI G4 / Febri Nurfitri Ramadhani" },
+            { bank: "BRI", norek: "529601007842508", nama: "WD BRI G5 / NATALDO K.P,GULO" },
+            { bank: "BRI", norek: "040401020446531", nama: "WD BRI G7 / MANGARA JOYAKHIN SIMANJUNTAK" },
+            { bank: "BRI", norek: "133301010153508", nama: "WD BRI G8 / RIO EL FAHMIE LIZAM" },
+            { bank: "BRI", norek: "040401067487506", nama: "WD BRI G9 / CUT MEUTHIA RAHMADHINA" },
+            { bank: "BRI", norek: "529601007841502", nama: "WD BRI G10 / GABRIEL IMMANUEL SIBAGARIANG" },
+            { bank: "BRI", norek: "033601159160506", nama: "WD BRI G11 / ERDIO RAVA DZHWAN" },
+            { bank: "BRI", norek: "529601007850501", nama: "WD BRI G12 / FELLY YOSAFAT SIHOMBING" },
+            { bank: "BRI", norek: "529601007838509", nama: "WD BRI G13 / MICHAEL JUNIOR HUTAGAOL" },
+            { bank: "BRI", norek: "040401068331504", nama: "WD BRI G14 / ERWIN HUTABARAT" },
+            { bank: "BNI", norek: "1924606390", nama: "WD BNI / G2 Dede Hardiansyah" },
+            { bank: "BNI", norek: "1924233315", nama: "WD BNI / G3 Ujang" },
+            { bank: "BNI", norek: "1924651785", nama: "WD BNI / G4 Eka Sofiana" },
+            { bank: "BNI", norek: "1951788626", nama: "WD BNI / G5 RISMAWATI" },
+            { bank: "BNI", norek: "1958533545", nama: "WD BNI / G6 BAGAS ARIA TRISNA" },
+            { bank: "BNI", norek: "1958554963", nama: "WD BNI / G7 VITO PRAMANA SAPUTRA" },
+            { bank: "BNI", norek: "1958554384", nama: "WD BNI / G8 SURYA WIJAYA" },
+            { bank: "BNI", norek: "1992948425", nama: "WD BNI / G9 SUNARYA" },
+            { bank: "BNI", norek: "1992953999", nama: "WD BNI / G10 KEVIN MAULANA LUBIS" },
+            { bank: "BNI", norek: "1992980672", nama: "WD BNI / G11 MEMES FIRA DWIYANA" },
+            { bank: "CIMB", norek: "708197093600", nama: "WD CIMB G1 / CECAR SARAMBU KUSUMO SUNDUN" },
+            { bank: "CIMB", norek: "708256271300", nama: "WD CIMB G2 / DWI GILANG RAMADHAN" },
+            { bank: "CIMB", norek: "708355880900", nama: "WD CIMB G3 / Erni Kisdiana" },
+            { bank: "CIMB", norek: "708465826600", nama: "WD CIMB G4 / FADILLA CHAIRUNNISA" },
+            { bank: "DANAMON", norek: "3693534160", nama: "WD DANAMON G1 / QOUBUS AKBAR ZAHRAN" },
+            { bank: "DANAMON", norek: "903693140786", nama: "WD DANAMON G2 / EKA YUNI PERTIWI" },
+            { bank: "MAYBANK", norek: "8755979133", nama: "WD MAYBANK G1 / Siti Nurlaila" },
+            { bank: "BCA", norek: "6560357913", nama: "WD BCA G1 / INDRA SEPTIAN" },
+            { bank: "BCA", norek: "5850396029", nama: "WD BCA G2 / Lilis Ernawati" },
+            { bank: "BCA", norek: "1980356741", nama: "WD BCA G3 / FARIS IMAM BUCHORI" },
+            { bank: "BCA", norek: "5798022754", nama: "WD BCA G4 / Amelia Wati Wibisono" },
+            { bank: "BCA", norek: "5798039592", nama: "WD BCA G5 / Bobi Saputra" },
+            { bank: "BCA", norek: "5830388291", nama: "WD BCA G6 / TJONG ARIH / M RAMDANI" },
+            { bank: "BCA", norek: "1082902672", nama: "WD BCA G7 / SHERLY" },
+            { bank: "BCA", norek: "4080258629", nama: "WD BCA G9 / Ratmi B Warsad" },
+            { bank: "BCA", norek: "1370574959", nama: "WD BCA G10 / Ali Nurdin" },
+            { bank: "BCA", norek: "0031420040", nama: "WD BCA G11 / REZA ADRIANNI" },
+            { bank: "BCA", norek: "2770738434", nama: "WD BCA G12 / NURSIAH" },
+            { bank: "BRI", norek: "055601011614538", nama: "WD BRI G1 / Priyo Aryatno" },
+            { bank: "BRI", norek: "007101112376500", nama: "WD BRI G2 / Ari Romayanti" },
+            { bank: "CIMB", norek: "763776016100", nama: "WD CIMB G1 / ROSIDA" },
+            { bank: "CIMB", norek: "763724724000", nama: "WD CIMB G2 / IKAL BUDIAWAN" },
+            { bank: "DANAMON", norek: "3674201797", nama: "BANK WD DANAMON G1 / M ADRIL YANSAH" }
+        ].map(node => ({...node, saldo: 0, lastSaldo: 0}));
 
-        // 1. Core Logic: Precision Parsing
-        function parsePrecisionBalance(row, norek) {
-            let foundValues = [];
-            
-            row.forEach(cell => {
-                if (!cell) return;
-                // Bersihkan teks: hilangkan Rp, titik, koma, spasi
-                let cleanValue = cell.toString().replace(/Rp/g, '').replace(/\./g, '').replace(/,/g, '').trim();
-                
-                // Cari angka murni
-                let match = cleanValue.match(/\d+/g);
-                if (match) {
-                    match.forEach(m => {
-                        // Kriteria Saldo: Bukan norek, panjang 4-12 digit
-                        if (m !== norek && m.length >= 4 && m.length <= 12) {
-                            foundValues.push(parseInt(m));
-                        }
-                    });
-                }
-            });
-
-            // Akurasi Tertinggi: Biasanya saldo adalah angka terakhir yang muncul di baris
-            return foundValues.length > 0 ? foundValues[foundValues.length - 1] : 0;
-        }
-
-        // 2. Data Synchronization
-        async function ambilData() {
-            updateUIStatus("loading");
-            addLog("Syncing with master stream...");
-
+        // Engine Utama
+        async function syncData() {
+            log("Memulai sinkronisasi global...");
             try {
-                const response = await fetch(`${CSV_URL}&t=${Date.now()}`);
-                const csvData = await response.text();
-                
-                Papa.parse(csvData, {
-                    complete: (results) => {
-                        processResults(results.data);
-                        updateUIStatus("online");
-                    }
+                const res = await fetch(`${CSV_URL}&t=${Date.now()}`);
+                const text = await res.text();
+                Papa.parse(text, {
+                    complete: (results) => processSync(results.data)
                 });
-            } catch (error) {
-                updateUIStatus("error");
-                addLog("Stream error: " + error.message);
-            }
+            } catch (e) { log("Error koneksi: " + e.message); }
         }
 
-        function processResults(rows) {
-            let currentGrandTotal = 0;
-            
-            nodes.forEach(node => {
-                const prevSaldo = node.saldo;
+        function processSync(rows) {
+            let total = 0;
+            masterNodes.forEach(node => {
+                node.lastSaldo = node.saldo;
                 node.saldo = 0;
-
-                // Cari baris berdasarkan Nama (Case Insensitive)
-                const targetRow = rows.find(r => 
-                    r.some(cell => cell && cell.toString().toUpperCase().trim() === node.nama.toUpperCase().trim())
+                
+                // Cari baris data
+                const row = rows.find(r => 
+                    r.some(cell => cell && cell.toString().toUpperCase().includes(node.nama.toUpperCase().split('/')[0].trim()))
                 );
 
-                if (targetRow) {
-                    node.saldo = parsePrecisionBalance(targetRow, node.norek);
-                    node.updated = (node.saldo !== prevSaldo);
+                if (row) {
+                    let vals = [];
+                    row.forEach(c => {
+                        let n = c.toString().replace(/[^\d]/g, '');
+                        if (n.length >= 4 && n.length <= 12 && n !== node.norek) vals.push(parseInt(n));
+                    });
+                    node.saldo = vals.length > 0 ? vals[vals.length - 1] : 0;
                 }
-                currentGrandTotal += node.saldo;
+                total += node.saldo;
             });
-
-            if (currentGrandTotal > lastGrandTotal && lastGrandTotal !== 0) {
-                new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(()=>{});
-                addLog("Asset inflow detected!");
-            }
-
-            lastGrandTotal = currentGrandTotal;
-            renderAll();
+            render();
+            document.getElementById('totalAll').innerText = formatIDR(total);
+            document.getElementById('nodeCount').innerText = masterNodes.length;
+            log("Sinkronisasi selesai. " + masterNodes.length + " terminal dipindai.");
         }
 
-        // 3. UI Rendering
-        function renderAll() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            let bankCount = {};
-
-            nodes.forEach((node, index) => {
-                bankCount[node.bank] = (bankCount[node.bank] || 0) + 1;
+        function render() {
+            const table = document.getElementById('mainTable');
+            const stats = document.getElementById('bankStats');
+            table.innerHTML = '';
+            stats.innerHTML = '';
+            
+            let bStats = {};
+            masterNodes.forEach(node => {
+                bStats[node.bank] = (bStats[node.bank] || 0) + 1;
+                const isChanged = node.saldo !== node.lastSaldo;
                 
-                tbody.innerHTML += `
-                    <tr class="group transition-all ${node.updated ? 'value-up' : ''}">
-                        <td class="p-6">
-                            <span class="px-3 py-1 bg-indigo-500/10 text-indigo-400 rounded-lg text-[10px] font-black uppercase tracking-tighter border border-indigo-500/20">
+                table.innerHTML += `
+                    <tr class="${isChanged ? 'row-update' : ''} hover:bg-white/[0.02]">
+                        <td class="p-5">
+                            <span class="text-[10px] font-black px-2 py-1 bg-indigo-500/10 text-indigo-400 rounded-lg border border-indigo-500/20 uppercase">
                                 ${node.bank}
                             </span>
                         </td>
-                        <td class="p-6">
+                        <td class="p-5">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-slate-200 uppercase tracking-tight">${node.nama}</span>
-                                <span class="text-[10px] mono text-slate-500">${node.norek}</span>
+                                <span class="text-sm font-bold text-slate-200 uppercase">${node.nama}</span>
+                                <span class="text-[10px] mono text-slate-500 tracking-widest">${node.norek}</span>
                             </div>
                         </td>
-                        <td class="p-6 text-right">
-                            <div class="text-lg font-black mono ${node.saldo > 0 ? 'text-emerald-400' : 'text-slate-700'}">
-                                ${formatIDR(node.saldo)}
-                            </div>
+                        <td class="p-5 text-right font-black mono text-lg ${node.saldo > 0 ? 'text-emerald-400' : 'text-slate-700'}">
+                            ${formatIDR(node.saldo)}
                         </td>
-                        <td class="p-6 text-center">
-                            <div class="flex items-center justify-center gap-4">
-                                <div class="w-2 h-2 rounded-full ${node.saldo > 0 ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-slate-700'}"></div>
-                                <button onclick="deleteNode(${index})" class="text-slate-600 hover:text-red-500 transition">
-                                    <i class="fas fa-trash-alt text-xs"></i>
-                                </button>
-                            </div>
+                        <td class="p-5 text-center">
+                            <div class="w-2 h-2 rounded-full mx-auto ${node.saldo > 0 ? 'bg-emerald-500 shadow-[0_0_8px_emerald]' : 'bg-slate-800'}"></div>
                         </td>
                     </tr>
                 `;
             });
 
-            document.getElementById('grandTotal').innerText = formatIDR(lastGrandTotal);
-            renderStats(bankCount);
-        }
-
-        function renderStats(counts) {
-            const container = document.getElementById('bankDistribution');
-            container.innerHTML = '';
-            Object.keys(counts).forEach(bank => {
-                const percent = (counts[bank] / nodes.length) * 100;
-                container.innerHTML += `
+            Object.entries(bStats).sort((a,b) => b[1] - a[1]).forEach(([name, count]) => {
+                const p = (count / masterNodes.length) * 100;
+                stats.innerHTML += `
                     <div>
-                        <div class="flex justify-between text-[10px] font-black text-slate-500 mb-2 uppercase">
-                            <span>${bank}</span>
-                            <span>${counts[bank]} UNIT</span>
+                        <div class="flex justify-between text-[10px] font-bold text-slate-500 mb-1 uppercase">
+                            <span>${name}</span><span>${count} Terminal</span>
                         </div>
-                        <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                            <div class="h-full bg-indigo-500 rounded-full" style="width: ${percent}%"></div>
+                        <div class="h-1 bg-slate-800 rounded-full overflow-hidden">
+                            <div class="h-full bg-indigo-500" style="width: ${p}%"></div>
                         </div>
                     </div>
                 `;
             });
         }
 
-        // 4. Helpers
         function formatIDR(v) { return "Rp " + new Intl.NumberFormat('id-ID').format(v); }
-        function toggleModal() { document.getElementById('modal').classList.toggle('hidden'); }
-        function addLog(msg) {
-            const logBox = document.getElementById('logs');
-            logBox.innerHTML = `<div>> ${msg}</div>` + logBox.innerHTML;
+        function log(m) {
+            const l = document.getElementById('logs');
+            l.innerHTML = `<div class="border-l-2 border-indigo-500 pl-2 opacity-80">[${new Date().toLocaleTimeString()}] ${m}</div>` + l.innerHTML;
+        }
+        function filter() {
+            const v = document.getElementById('search').value.toLowerCase();
+            document.querySelectorAll('#mainTable tr').forEach(r => r.style.display = r.innerText.toLowerCase().includes(v) ? '' : 'none');
         }
 
-        function updateUIStatus(s) {
-            const badge = document.getElementById('statusBadge');
-            const time = document.getElementById('lastUpdate');
-            if(s === "online") {
-                badge.innerText = "Engine: Optimized"; badge.className = "text-[10px] font-black uppercase tracking-[0.2em] px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded";
-                time.innerText = "LAST SYNC: " + new Date().toLocaleTimeString();
-            } else if(s === "loading") {
-                badge.innerText = "Engine: Syncing..."; badge.className = "text-[10px] font-black uppercase tracking-[0.2em] px-2 py-0.5 bg-indigo-500/10 text-indigo-500 rounded";
-            } else {
-                badge.innerText = "Engine: Offline"; badge.className = "text-[10px] font-black uppercase tracking-[0.2em] px-2 py-0.5 bg-red-500/10 text-red-500 rounded";
-            }
-        }
-
-        function saveNode() {
-            const b = document.getElementById('inBank').value.toUpperCase();
-            const r = document.getElementById('inRek').value;
-            const n = document.getElementById('inNama').value.toUpperCase();
-            if(b && r && n) {
-                nodes.unshift({ bank: b, norek: r, nama: n, saldo: 0 });
-                localStorage.setItem('tv_nodes_v5', JSON.stringify(nodes));
-                renderAll(); toggleModal(); ambilData();
-            }
-        }
-
-        function deleteNode(i) {
-            if(confirm('Disconnect this terminal?')) {
-                nodes.splice(i, 1);
-                localStorage.setItem('tv_nodes_v5', JSON.stringify(nodes));
-                renderAll();
-            }
-        }
-
-        function filterTable() {
-            const val = document.getElementById('searchInput').value.toLowerCase();
-            const tr = document.querySelectorAll('#tableBody tr');
-            tr.forEach(r => r.style.display = r.innerText.toLowerCase().includes(val) ? '' : 'none');
-        }
-
-        // Init
-        const saved = localStorage.getItem('tv_nodes_v5');
-        nodes = saved ? JSON.parse(saved) : [];
-        renderAll();
-        ambilData();
-        setInterval(ambilData, 60000); // Auto-sync every minute
+        syncData();
+        setInterval(syncData, 60000);
     </script>
 </body>
 </html>
