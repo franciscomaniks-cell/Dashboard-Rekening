@@ -3,194 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TVTOTO PRO - Real-Time Monitor</title>
+    <title>TVTOTO PRO - Final Perfect Version</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
-        .card-active { border-left: 4px solid #4f46e5; transition: all 0.5s ease; }
-        .card-zero { opacity: 0.5; filter: grayscale(1); }
-        .pulse-green { animation: pulse-green 2s infinite; border: 2px solid #22c55e !important; }
-        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
-        .custom-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        .card-active { border-top: 4px solid #6366f1; transition: all 0.3s ease; }
+        .card-zero { opacity: 0.6; filter: grayscale(0.5); }
+        .custom-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+        .status-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <div id="notificationContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2"></div>
-
     <div class="max-w-7xl mx-auto">
-        <div class="bg-white rounded-3xl p-6 md:p-10 mb-8 shadow-xl border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div>
-                <div class="flex items-center gap-3 mb-2">
-                    <span class="bg-indigo-600 text-white p-2 rounded-xl shadow-lg shadow-indigo-200">
-                        <i class="fas fa-bolt text-xl"></i>
-                    </span>
-                    <h1 class="text-3xl font-extrabold text-slate-800 italic tracking-tighter">TVTOTO <span class="text-indigo-600">LIVE</span></h1>
+        <div class="bg-white rounded-[2rem] p-6 md:p-8 mb-8 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-4">
+                <div class="bg-indigo-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                    <i class="fas fa-university text-2xl"></i>
                 </div>
-                <div id="statusUpdate" class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 flex items-center">
-                    <span class="w-2 h-2 bg-amber-500 rounded-full mr-2 animate-ping"></span> Mengambil Data...
+                <div>
+                    <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">TVTOTO MONITOR</h1>
+                    <div id="statusUpdate" class="flex items-center text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2 status-pulse"></span>
+                        <span id="statusLabel">Menyambungkan ke Server...</span>
+                    </div>
                 </div>
             </div>
-            
-            <div class="bg-slate-900 px-8 py-5 rounded-3xl text-center md:text-right shadow-2xl">
-                <p class="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Total Saldo Seluruh Bank</p>
-                <h2 id="grandTotal" class="text-4xl font-[900] text-white tabular-nums">Rp 0</h2>
+            <div class="text-center md:text-right bg-slate-50 px-8 py-4 rounded-3xl border border-slate-100">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Saldo Terdeteksi</p>
+                <h2 id="grandTotal" class="text-3xl font-[900] text-slate-900 tabular-nums">Rp 0</h2>
             </div>
         </div>
 
-        <div class="flex flex-col md:flex-row gap-4 mb-8">
-            <div class="relative flex-grow">
-                <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="searchInput" onkeyup="filterCards()" placeholder="Cari Nama atau No Rekening..." 
-                class="w-full pl-14 pr-6 py-5 rounded-2xl border-none shadow-sm focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-600 transition-all">
-            </div>
-            <div class="bg-white px-6 py-4 rounded-2xl shadow-sm flex items-center gap-4 border border-slate-200">
-                <button onclick="enableAudio()" id="audioBtn" class="bg-slate-100 p-2 rounded-lg text-slate-500 hover:bg-indigo-100 hover:text-indigo-600 transition">
-                    <i class="fas fa-volume-up"></i>
-                </button>
-                <select id="filterType" onchange="filterCards()" class="bg-transparent font-bold text-indigo-600 outline-none cursor-pointer text-sm">
-                    <option value="all">Semua Rekening</option>
-                    <option value="active">Saldo Aktif (>0)</option>
-                    <option value="zero">Saldo Rp 0</option>
-                </select>
-            </div>
+        <div class="relative mb-8">
+            <i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="searchInput" onkeyup="filterCards()" placeholder="Cari nama bank atau pemilik rekening..." 
+            class="w-full pl-16 pr-8 py-5 rounded-2xl bg-white border border-slate-200 shadow-sm focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-600 text-lg transition-all">
         </div>
 
-        <div id="cardContainer" class="custom-grid"></div>
+        <div id="cardContainer" class="custom-grid">
+            </div>
 
-        <div id="noData" class="hidden text-center py-20">
-            <i class="fas fa-search text-4xl text-slate-200 mb-4"></i>
-            <p class="text-slate-400 font-bold uppercase tracking-widest">Data tidak ditemukan</p>
+        <div id="emptyState" class="hidden text-center py-20">
+            <div class="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-database text-slate-300 text-3xl"></i>
+            </div>
+            <p class="text-slate-400 font-bold uppercase tracking-widest">Data Tidak Ditemukan</p>
         </div>
     </div>
 
     <script>
-        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/pub?gid=1655913458&single=true&output=csv';
+        // Gunakan link CSV Anda
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/pub?gid=1655913458&single=true&output=csv';
         
-        let oldData = [];
-        let audioEnabled = false;
+        let masterData = [];
 
-        function enableAudio() {
-            audioEnabled = true;
-            document.getElementById('audioBtn').classList.replace('bg-slate-100', 'bg-emerald-500');
-            document.getElementById('audioBtn').classList.replace('text-slate-500', 'text-white');
-            alert("Notifikasi Suara Aktif!");
-        }
-
-        async function init() {
+        async function loadData() {
             try {
-                const response = await fetch(sheetUrl);
-                const csv = await response.text();
-                Papa.parse(csv, {
+                const response = await fetch(csvUrl);
+                const text = await response.text();
+                
+                // Smart Parsing: Mendeteksi pemisah otomatis (koma atau titik koma)
+                Papa.parse(text, {
                     header: false,
+                    skipEmptyLines: true,
                     complete: function(results) {
-                        smartProcess(results.data);
+                        processRows(results.data);
                     }
                 });
-            } catch (e) {
-                document.getElementById('statusUpdate').innerHTML = '<span class="text-red-500 font-black tracking-widest">KONEKSI TERPUTUS</span>';
+            } catch (err) {
+                document.getElementById('statusLabel').innerText = "Gagal Memuat Data";
             }
         }
 
-        function smartProcess(rows) {
-            let currentData = [];
-            let total = 0;
+        function processRows(rows) {
+            let temp = [];
+            let totalAll = 0;
 
-            // 1. Scan WD Section
-            const wdNames = rows[1] || [];
-            const wdValues = rows[10] || [];
-            wdNames.forEach((name, i) => {
-                if (name && name.length > 5 && name.includes('/')) {
-                    let saldo = parseInt(String(wdValues[i]).replace(/[^0-9]/g, '')) || 0;
-                    currentData.push({ name: name.trim(), saldo, group: 'WD BERSIH' });
-                    total += saldo;
-                }
-            });
-
-            // 2. Scan DEPO Section
-            rows.forEach((row, rowIndex) => {
-                if (rowIndex > 15) {
-                    row.forEach((cell, colIndex) => {
-                        if (cell && cell.includes('/') && cell.length > 5) {
-                            let nextRow = rows[rowIndex + 1];
-                            if (nextRow && nextRow[colIndex]) {
-                                let saldo = parseInt(String(nextRow[colIndex]).replace(/[^0-9]/g, '')) || 0;
-                                if (!currentData.find(x => x.name === cell.trim())) {
-                                    currentData.push({ name: cell.trim(), saldo, group: 'DEPO' });
-                                    total += saldo;
-                                }
-                            }
-                        }
-                    });
-                }
-            });
-
-            checkChanges(currentData);
-            oldData = JSON.parse(JSON.stringify(currentData)); // Simpan data sekarang untuk pembanding nanti
+            // STRUKTUR DATA: 
+            // Nama Rekening biasanya mengandung karakter '/' atau Nama Bank (BCA/BRI/OCBC)
+            // Saldo biasanya angka besar di kolom yang sama
             
-            render(currentData);
-            document.getElementById('grandTotal').innerText = "Rp " + new Intl.NumberFormat('id-ID').format(total);
-            document.getElementById('statusUpdate').innerHTML = '<span class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span> DATA TERHUBUNG: ' + new Date().toLocaleTimeString();
-        }
+            // Kita scan baris demi baris secara cerdas
+            rows.forEach((row, rowIndex) => {
+                row.forEach((cell, colIndex) => {
+                    let content = cell ? cell.toString().trim() : "";
+                    
+                    // Kriteria Rekening: Mengandung '/' atau kata bank utama
+                    if (content.includes('/') || content.toUpperCase().includes('OCBC') || content.toUpperCase().includes('KAS')) {
+                        
+                        // Cari Saldo: Berdasarkan file Anda, saldo utama ada di Baris 11 (Index 10)
+                        // atau tepat di baris bawah untuk bagian DEPO.
+                        let rawSaldo = "0";
+                        
+                        if (rows[10] && rows[10][colIndex]) {
+                            rawSaldo = rows[10][colIndex]; // Untuk WD BERSIH
+                        } else if (rows[rowIndex + 1] && rows[rowIndex + 1][colIndex]) {
+                            rawSaldo = rows[rowIndex + 1][colIndex]; // Untuk DEPO
+                        }
 
-        function checkChanges(newData) {
-            if (oldData.length === 0) return;
+                        let saldoVal = parseInt(rawSaldo.replace(/[^0-9]/g, '')) || 0;
 
-            newData.forEach(newItem => {
-                const oldItem = oldData.find(o => o.name === newItem.name);
-                if (oldItem && newItem.saldo > oldItem.saldo) {
-                    const diff = newItem.saldo - oldItem.saldo;
-                    notify(newItem.name, diff);
-                    if (audioEnabled) playAlertSound();
-                }
+                        // Validasi agar tidak memasukkan sampah data (minimal nama punya panjang 5 karakter)
+                        if (content.length > 5 && !temp.some(x => x.name === content)) {
+                            temp.push({
+                                name: content,
+                                saldo: saldoVal,
+                                bank: detectBank(content)
+                            });
+                            totalAll += saldoVal;
+                        }
+                    }
+                });
             });
-        }
 
-        function notify(name, amount) {
-            const container = document.getElementById('notificationContainer');
-            const toast = document.createElement('div');
-            toast.className = "bg-emerald-600 text-white p-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-bounce";
-            toast.innerHTML = `
-                <i class="fas fa-coins"></i>
-                <div>
-                    <p class="text-[10px] font-bold opacity-80 uppercase">Saldo Masuk!</p>
-                    <p class="text-xs font-black uppercase">${name}</p>
-                    <p class="text-sm font-bold">+ Rp ${new Intl.NumberFormat('id-ID').format(amount)}</p>
-                </div>
-            `;
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 8000);
-        }
-
-        function playAlertSound() {
-            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-            audio.play();
+            masterData = temp;
+            render(masterData);
+            document.getElementById('grandTotal').innerText = formatIDR(totalAll);
+            document.getElementById('statusLabel').innerText = "Live Update: " + new Date().toLocaleTimeString();
         }
 
         function render(data) {
             const container = document.getElementById('cardContainer');
+            const empty = document.getElementById('emptyState');
             container.innerHTML = '';
-            
-            data.forEach(item => {
-                const isZero = item.saldo === 0;
-                // Cek apakah baru saja ada penambahan saldo
-                const isIncreased = oldData.length > 0 && 
-                                   (oldData.find(o => o.name === item.name)?.saldo < item.saldo);
 
+            if (data.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            data.sort((a, b) => b.saldo - a.saldo).forEach(item => {
+                const isZero = item.saldo === 0;
                 container.innerHTML += `
-                    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 transition-all card-data 
-                        ${isZero ? 'card-zero' : 'card-active'} ${isIncreased ? 'pulse-green' : ''}">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 card-active ${isZero ? 'card-zero' : ''}">
                         <div class="flex justify-between items-start mb-4">
-                            <span class="text-[9px] font-black bg-slate-100 text-slate-500 px-3 py-1 rounded-full uppercase">${detectBank(item.name)}</span>
-                            <span class="text-[9px] font-black ${item.group === 'DEPO' ? 'text-amber-500' : 'text-indigo-500'} uppercase">${item.group}</span>
+                            <span class="text-[10px] font-black bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg uppercase tracking-wider">${item.bank}</span>
+                            <div class="h-2 w-2 rounded-full ${isZero ? 'bg-slate-300' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]'}"></div>
                         </div>
-                        <h3 class="font-bold text-slate-800 text-xs mb-6 uppercase h-8 overflow-hidden line-clamp-2">${item.name}</h3>
-                        <div class="pt-4 border-t border-slate-50 flex justify-between items-end">
-                            <div class="text-[9px] font-black text-slate-300 uppercase italic">Balance</div>
-                            <div class="text-lg font-[900] text-slate-900 tabular-nums">Rp ${new Intl.NumberFormat('id-ID').format(item.saldo)}</div>
+                        <h3 class="text-xs font-bold text-slate-800 uppercase mb-6 leading-relaxed h-10 overflow-hidden line-clamp-2 italic">${item.name}</h3>
+                        <div class="flex flex-col border-t border-slate-50 pt-4">
+                            <span class="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-1">Saldo Terkini</span>
+                            <span class="text-xl font-black text-slate-900 tabular-nums">${formatIDR(item.saldo)}</span>
                         </div>
                     </div>
                 `;
@@ -198,25 +157,26 @@
         }
 
         function detectBank(str) {
-            const banks = ["BCA", "BRI", "BNI", "MANDIRI", "OCBC", "DANAMON", "SINARMAS"];
-            for (let b of banks) { if (str.toUpperCase().includes(b)) return b; }
+            const banks = ["BCA", "BRI", "BNI", "MANDIRI", "OCBC", "DANAMON", "SINARMAS", "MAYBANK", "CIMB"];
+            for (let b of banks) {
+                if (str.toUpperCase().includes(b)) return b;
+            }
             return "BANK";
         }
 
+        function formatIDR(val) {
+            return "Rp " + new Intl.NumberFormat('id-ID').format(val);
+        }
+
         function filterCards() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const type = document.getElementById('filterType').value;
-            let filtered = allData.filter(item => {
-                const matchSearch = item.name.toLowerCase().includes(query);
-                if (type === 'active') return matchSearch && item.saldo > 0;
-                if (type === 'zero') return matchSearch && item.saldo === 0;
-                return matchSearch;
-            });
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = masterData.filter(d => d.name.toLowerCase().includes(q));
             render(filtered);
         }
 
-        init();
-        setInterval(init, 30000); // Update dipercepat jadi 30 detik untuk alert yang lebih cepat
+        // Jalankan
+        loadData();
+        setInterval(loadData, 60000); // Update tiap 1 menit
     </script>
 </body>
 </html>
