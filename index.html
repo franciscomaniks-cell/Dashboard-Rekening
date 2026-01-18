@@ -3,124 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TVTOTO Monitor | Advanced Dashboard</title>
+    <title>TVTOTO | Financial Statement System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         
-        :root {
-            --glass: rgba(255, 255, 255, 0.95);
-        }
-
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-            min-height: 100vh;
-            color: #1e293b;
+            background-color: #fcfcfd;
+            color: #1a1a1a;
         }
 
-        .glass-card {
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        .balance-num { font-family: 'JetBrains Mono', monospace; }
+
+        .list-item {
+            transition: all 0.2s ease;
+            border-bottom: 1px solid #f1f5f9;
         }
 
-        .balance-gradient {
-            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+        .list-item:hover {
+            background-color: #f8fafc;
+            transform: scale(1.002);
         }
 
-        .bank-card {
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            border-left: 0px solid #4f46e5;
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
         }
 
-        .bank-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            border-left-width: 6px;
+        .gradient-text {
+            background: linear-gradient(to right, #4f46e5, #9333ea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .animate-pulse-fast {
-            animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="p-4 md:p-10">
+<body class="antialiased">
 
-    <div class="max-w-7xl mx-auto">
-        <header class="flex flex-col lg:flex-row gap-6 mb-12 items-stretch">
-            <div class="glass-card flex-grow rounded-[2.5rem] p-8 flex items-center justify-between">
-                <div class="flex items-center gap-5">
-                    <div class="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-2xl">
-                        <i class="fas fa-chart-pie text-2xl"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-3xl font-extrabold tracking-tighter text-slate-900 italic">TVTOTO<span class="text-indigo-600">.MONITOR</span></h1>
-                        <p class="text-slate-400 font-semibold text-xs uppercase tracking-widest flex items-center gap-2">
-                            <span class="status-dot bg-emerald-500 animate-pulse-fast"></span>
-                            System Live: <span id="lastUpdated" class="text-slate-600 lowercase">...</span>
-                        </p>
-                    </div>
+    <nav class="sticky-header border-b border-slate-100">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg">
+                    <i class="fas fa-wallet text-sm"></i>
                 </div>
-                <div class="hidden md:block">
-                    <button onclick="loadData()" class="p-3 hover:bg-slate-100 rounded-full transition-colors">
-                        <i class="fas fa-sync-alt text-slate-400"></i>
-                    </button>
+                <h1 class="text-xl font-extrabold tracking-tight">TVTOTO<span class="text-indigo-600">.SYSTEM</span></h1>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="text-right">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Total Net Balance</p>
+                    <p id="grandTotal" class="text-xl font-extrabold text-slate-900 balance-num">Rp 0</p>
                 </div>
             </div>
+        </div>
+    </nav>
 
-            <div class="balance-gradient rounded-[2.5rem] p-8 text-white min-w-[320px] shadow-2xl shadow-indigo-200 flex flex-col justify-center">
-                <p class="text-indigo-100 text-[10px] font-black uppercase tracking-[0.2em] mb-2 opacity-80">Accumulated Balance</p>
-                <div class="flex items-baseline gap-2">
-                    <h2 id="grandTotal" class="text-4xl font-extrabold tracking-tight">Rp 0</h2>
-                </div>
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        
+        <div class="flex flex-col md:flex-row justify-between items-end gap-6 mb-10">
+            <div class="w-full md:w-1/2">
+                <h2 class="text-3xl font-bold mb-2 tracking-tight">Financial <span class="gradient-text">Overview</span></h2>
+                <p class="text-slate-500 text-sm">Laporan saldo real-time untuk seluruh rekening bank terdaftar.</p>
             </div>
-        </header>
-
-        <div class="flex flex-col md:flex-row gap-4 mb-10">
-            <div class="relative flex-grow group">
-                <i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors"></i>
-                <input type="text" id="searchInput" onkeyup="filterCards()" 
-                    placeholder="Search accounts, names, or banks..." 
-                    class="w-full pl-16 pr-8 py-5 rounded-2xl bg-white border-none shadow-sm focus:ring-4 focus:ring-indigo-100 outline-none font-medium text-slate-600 transition-all">
-            </div>
-            <div class="glass-card px-6 py-2 rounded-2xl flex items-center gap-4 text-slate-500 font-bold text-sm">
-                <span id="activeCount">0</span> Accounts Tracked
+            
+            <div class="w-full md:w-1/3 relative">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="searchInput" onkeyup="filterList()" 
+                    placeholder="Search accounts..." 
+                    class="w-full pl-12 pr-4 py-3 rounded-xl bg-slate-100 border-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-sm">
             </div>
         </div>
 
-        <div id="cardContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+            <div class="grid grid-cols-12 px-8 py-4 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <div class="col-span-6 md:col-span-7">Account Details</div>
+                <div class="col-span-3 md:col-span-2 text-center">Status</div>
+                <div class="col-span-3 md:col-span-3 text-right">Current Balance</div>
             </div>
 
-        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-32 text-center">
-            <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-inner">
-                <i class="fas fa-folder-open text-slate-200 text-4xl"></i>
-            </div>
-            <h3 class="text-xl font-bold text-slate-400">No matches found</h3>
-            <p class="text-slate-300">Try adjusting your search criteria</p>
+            <div id="dataList">
+                </div>
         </div>
-    </div>
+
+        <div class="mt-8 flex justify-between items-center px-4">
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                <span id="statusLabel" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Syncing...</span>
+            </div>
+            <p class="text-[10px] font-bold text-slate-300 uppercase">Automated Banking Monitor v4.0</p>
+        </div>
+    </main>
 
     <script>
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/pub?gid=1655913458&single=true&output=csv';
@@ -136,7 +112,7 @@
                     complete: function(results) { processRows(results.data); }
                 });
             } catch (err) {
-                console.error("Fetch failed");
+                console.error("Connection failed");
             }
         }
 
@@ -169,79 +145,53 @@
                 });
             });
 
-            masterData = temp;
+            masterData = temp.sort((a, b) => b.saldo - a.saldo);
             render(masterData);
             document.getElementById('grandTotal').innerText = formatIDR(totalAll);
-            document.getElementById('lastUpdated').innerText = new Date().toLocaleTimeString('id-ID');
-            document.getElementById('activeCount').innerText = temp.length;
+            document.getElementById('statusLabel').innerText = "Last Sync: " + new Date().toLocaleTimeString();
         }
 
         function render(data) {
-            const container = document.getElementById('cardContainer');
-            const empty = document.getElementById('emptyState');
+            const container = document.getElementById('dataList');
             container.innerHTML = '';
 
-            if (data.length === 0) {
-                empty.classList.remove('hidden');
-                return;
-            }
-            empty.classList.add('hidden');
-
-            data.sort((a, b) => b.saldo - a.saldo).forEach(item => {
+            data.forEach(item => {
                 const isZero = item.saldo === 0;
-                const bankColor = getBankColor(item.bank);
-                
                 container.innerHTML += `
-                    <div class="glass-card p-7 rounded-[2.5rem] bank-card flex flex-col justify-between h-64 ${isZero ? 'opacity-50 grayscale' : ''}">
-                        <div class="flex justify-between items-start">
-                            <div class="px-4 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-widest" style="background: ${bankColor}20; color: ${bankColor}">
-                                ${item.bank}
+                    <div class="grid grid-cols-12 px-8 py-5 list-item items-center ${isZero ? 'opacity-40' : ''}">
+                        <div class="col-span-6 md:col-span-7 flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-[10px] font-extrabold text-indigo-600 border border-slate-100">
+                                ${item.bank.substring(0, 3)}
                             </div>
-                            <div class="w-2 h-2 rounded-full ${isZero ? 'bg-slate-300' : 'bg-emerald-500 animate-pulse-fast'}"></div>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm uppercase tracking-tight">${item.name}</h4>
+                                <p class="text-[9px] font-bold text-slate-400 tracking-widest">${item.bank} NETWORK</p>
+                            </div>
                         </div>
-                        
-                        <div class="my-6">
-                            <h3 class="text-slate-800 font-bold text-sm uppercase leading-snug line-clamp-2 italic">
-                                ${item.name}
-                            </h3>
-                        </div>
-
-                        <div class="flex flex-col">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Current Balance</span>
-                            <span class="text-2xl font-extrabold text-slate-900 tabular-nums">
-                                ${formatIDR(item.saldo)}
+                        <div class="col-span-3 md:col-span-2 text-center">
+                            <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${isZero ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-600'}">
+                                ${isZero ? 'Idle' : 'Active'}
                             </span>
+                        </div>
+                        <div class="col-span-3 md:col-span-3 text-right">
+                            <p class="font-extrabold text-slate-900 balance-num text-sm">${formatIDR(item.saldo)}</p>
                         </div>
                     </div>
                 `;
             });
         }
 
-        function getBankColor(bank) {
-            const colors = {
-                'BCA': '#0060ad',
-                'BRI': '#00529c',
-                'BNI': '#f15a23',
-                'MANDIRI': '#ffc20e',
-                'OCBC': '#ed1c24',
-                'DANAMON': '#ff5000'
-            };
-            return colors[bank.toUpperCase()] || '#6366f1';
-        }
-
         function detectBank(str) {
             const banks = ["BCA", "BRI", "BNI", "MANDIRI", "OCBC", "DANAMON", "SINARMAS", "MAYBANK", "CIMB"];
-            for (let b of banks) {
-                if (str.toUpperCase().includes(b)) return b;
-            }
-            return "Bank";
+            for (let b of banks) { if (str.toUpperCase().includes(b)) return b; }
+            return "BANK";
         }
 
         function formatIDR(val) {
             return "Rp " + new Intl.NumberFormat('id-ID').format(val);
         }
 
-        function filterCards() {
+        function filterList() {
             const q = document.getElementById('searchInput').value.toLowerCase();
             const filtered = masterData.filter(d => d.name.toLowerCase().includes(q));
             render(filtered);
