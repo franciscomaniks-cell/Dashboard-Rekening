@@ -9,11 +9,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
         .mono { font-family: 'JetBrains Mono', monospace; }
         .status-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-        .table-container { height: calc(100vh - 380px); overflow-y: auto; }
+        .table-container { height: calc(100vh - 350px); overflow-y: auto; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
 </head>
 <body class="text-slate-900">
@@ -22,16 +24,16 @@
         <aside class="w-72 bg-[#0f172a] text-white p-8 hidden lg:flex flex-col sticky top-0 h-screen shadow-2xl">
             <div class="mb-10 text-center">
                 <h1 class="text-3xl font-extrabold tracking-tighter italic text-indigo-400">TVTOTO<span class="text-white">PRO</span></h1>
-                <p class="text-[10px] uppercase tracking-[0.3em] font-bold text-slate-500 mt-2">Monitoring System v2.0</p>
+                <p class="text-[10px] uppercase tracking-[0.3em] font-bold text-slate-500 mt-2">Monitoring System v2.5</p>
             </div>
 
             <div class="space-y-4">
                 <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700">
                     <div class="flex justify-between items-center mb-2">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase">Server Status</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Server Connection</span>
                         <div id="statusDot" class="h-2 w-2 rounded-full bg-yellow-500 status-pulse"></div>
                     </div>
-                    <p id="statusText" class="text-sm font-semibold text-yellow-500 italic">Connecting...</p>
+                    <p id="statusText" class="text-sm font-semibold text-yellow-500 italic">Initializing...</p>
                 </div>
 
                 <div class="bg-indigo-600/10 p-4 rounded-2xl border border-indigo-500/30">
@@ -40,9 +42,9 @@
                 </div>
             </div>
 
-            <div class="mt-auto border-t border-slate-800 pt-6">
+            <div class="mt-auto pt-6 border-t border-slate-800">
                 <button onclick="ambilDataSaldo()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-95">
-                    <i class="fas fa-sync-alt mr-2"></i> Paksa Sinkron
+                    <i class="fas fa-sync-alt mr-2"></i> Sinkron Sekarang
                 </button>
             </div>
         </aside>
@@ -54,8 +56,8 @@
                         <i class="fas fa-wallet"></i>
                     </div>
                     <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Saldo Terpantau</p>
-                        <h3 id="totalSaldo" class="text-2xl font-extrabold mono tracking-tighter">Rp 0</h3>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Saldo Live</p>
+                        <h3 id="totalSaldo" class="text-2xl font-extrabold mono tracking-tighter text-indigo-600">Rp 0</h3>
                     </div>
                 </div>
 
@@ -64,22 +66,22 @@
                         <i class="fas fa-university"></i>
                     </div>
                     <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Rekening</p>
-                        <h3 id="totalBank" class="text-2xl font-extrabold mono tracking-tighter">0</h3>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Rekening Terdaftar</p>
+                        <h3 id="totalBank" class="text-2xl font-extrabold mono tracking-tighter text-emerald-600">0</h3>
                     </div>
                 </div>
 
                 <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 flex items-center justify-center">
                     <button onclick="toggleModal()" class="w-full h-full bg-slate-900 text-white rounded-2xl font-bold hover:bg-indigo-600 transition flex items-center justify-center gap-2">
-                        <i class="fas fa-plus-circle"></i> Tambah Data
+                        <i class="fas fa-plus-circle"></i> Tambah Akun
                     </button>
                 </div>
             </div>
 
             <div class="relative mb-6">
                 <i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Cari nama, rekening, atau bank..." 
-                class="w-full pl-14 pr-6 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition">
+                <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Cari nama atau rekening..." 
+                class="w-full pl-14 pr-6 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition">
             </div>
 
             <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
@@ -89,12 +91,11 @@
                             <tr>
                                 <th class="p-5 text-[10px] font-black uppercase text-slate-400 border-b">Provider</th>
                                 <th class="p-5 text-[10px] font-black uppercase text-slate-400 border-b">Detail Akun</th>
-                                <th class="p-5 text-[10px] font-black uppercase text-slate-400 border-b text-right">Saldo Live</th>
+                                <th class="p-5 text-[10px] font-black uppercase text-slate-400 border-b text-right">Saldo Terbaca</th>
                                 <th class="p-5 text-[10px] font-black uppercase text-slate-400 border-b text-center">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody" class="divide-y divide-slate-100">
-                            </tbody>
+                        <tbody id="tableBody" class="divide-y divide-slate-100"></tbody>
                     </table>
                 </div>
             </div>
@@ -103,15 +104,13 @@
 
     <div id="modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-[2.5rem] p-10 w-full max-w-md shadow-2xl">
-            <h2 class="text-2xl font-extrabold mb-6 flex items-center gap-3">
-                <i class="fas fa-plus-square text-indigo-600"></i> Rekening Baru
-            </h2>
+            <h2 class="text-2xl font-extrabold mb-6 flex items-center gap-3"><i class="fas fa-plus-square text-indigo-600"></i> Akun Baru</h2>
             <div class="space-y-4">
-                <input type="text" id="inBank" placeholder="Nama Bank (BCA, BRI...)" class="w-full p-4 bg-slate-50 rounded-xl border border-slate-100 outline-none focus:border-indigo-500 font-bold uppercase text-xs">
-                <input type="text" id="inRek" placeholder="Nomor Rekening" class="w-full p-4 bg-slate-50 rounded-xl border border-slate-100 outline-none focus:border-indigo-500 font-bold mono text-xs">
-                <input type="text" id="inNama" placeholder="Nama Akun (Harus Sama dengan Excel)" class="w-full p-4 bg-slate-50 rounded-xl border border-slate-100 outline-none focus:border-indigo-500 font-bold text-xs uppercase">
+                <input type="text" id="inBank" placeholder="BANK" class="w-full p-4 bg-slate-50 rounded-xl border border-slate-100 font-bold uppercase text-xs outline-none focus:border-indigo-500">
+                <input type="text" id="inRek" placeholder="NOMOR REKENING" class="w-full p-4 bg-slate-50 rounded-xl border border-slate-100 font-bold mono text-xs outline-none focus:border-indigo-500">
+                <input type="text" id="inNama" placeholder="NAMA SESUAI SPREADSHEET" class="w-full p-4 bg-slate-50 rounded-xl border border-slate-100 font-bold text-xs uppercase outline-none focus:border-indigo-500">
                 <div class="flex gap-3 pt-4">
-                    <button onclick="simpanData()" class="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-bold">SIMPAN</button>
+                    <button onclick="simpanData()" class="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 transition">SIMPAN</button>
                     <button onclick="toggleModal()" class="flex-1 bg-slate-100 text-slate-500 py-4 rounded-xl font-bold">BATAL</button>
                 </div>
             </div>
@@ -119,8 +118,11 @@
     </div>
 
     <script>
-        // MASUKKAN LINK CSV PUBLISH TO WEB ANDA DISINI
         const sheetCSVUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/pub?gid=1655913458&single=true&output=csv';
+        
+        // Asset Audio untuk Notifikasi
+        const soundAlert = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        let totalSaldoLama = 0;
 
         let dataBank = [
             { bank: "OCBC", norek: "621810071939", nama: "Raisah Bt Rali", saldo: 0 },
@@ -258,8 +260,7 @@
         async function ambilDataSaldo() {
             updateStatus("loading");
             try {
-                // Tambahkan Timestamp agar tidak terkena Cache Browser
-                const response = await fetch(`${sheetCSVUrl}&cachebuster=${Date.now()}`);
+                const response = await fetch(`${sheetCSVUrl}&t=${Date.now()}`);
                 const csvData = await response.text();
                 
                 Papa.parse(csvData, {
@@ -276,30 +277,34 @@
         }
 
         function prosesData(rows) {
+            let totalSaldoBaru = 0;
+
             dataBank.forEach(bank => {
-                bank.saldo = 0; // Reset dulu
-                
-                // Cari baris yang mengandung Nama Akun (Case Insensitive)
+                bank.saldo = 0; 
                 const baris = rows.find(r => 
-                    r.some(cell => {
-                        const cellVal = cell.toString().toLowerCase().trim();
-                        const targetNama = bank.nama.toLowerCase().trim();
-                        return cellVal.includes(targetNama) || targetNama.includes(cellVal);
-                    })
+                    r.some(cell => cell.toString().toLowerCase().trim() === bank.nama.toLowerCase().trim())
                 );
 
                 if (baris) {
-                    // Cari angka di dalam baris tersebut yang nilainya paling besar (asumsi itu saldo)
-                    let nilaiTerbesar = 0;
-                    baris.forEach(cell => {
-                        const cleanNum = parseInt(cell.toString().replace(/[^0-9]/g, '')) || 0;
-                        if (cleanNum > nilaiTerbesar) nilaiTerbesar = cleanNum;
-                    });
-                    
-                    // Validasi: Saldo biasanya di atas 1000 rupiah
-                    bank.saldo = nilaiTerbesar > 100 ? nilaiTerbesar : 0;
+                    let saldoFix = 0;
+                    for (let i = baris.length - 1; i >= 0; i--) {
+                        let rawValue = baris[i].toString().replace(/[^0-9]/g, '');
+                        if (rawValue !== "" && rawValue.length < 12) { 
+                            saldoFix = parseInt(rawValue);
+                            break; 
+                        }
+                    }
+                    bank.saldo = saldoFix;
+                    totalSaldoBaru += saldoFix;
                 }
             });
+
+            // Logika Suara: Jika total saldo naik, bunyikan alarm
+            if (totalSaldoBaru > totalSaldoLama && totalSaldoLama !== 0) {
+                soundAlert.play().catch(e => console.log("Interaksi user diperlukan untuk suara"));
+            }
+            totalSaldoLama = totalSaldoBaru;
+
             renderTable();
         }
 
@@ -310,28 +315,26 @@
 
             list.forEach((item, i) => {
                 total += item.saldo;
-                const hasSaldo = item.saldo > 0;
+                const active = item.saldo > 0;
 
                 body.innerHTML += `
                     <tr class="hover:bg-slate-50 transition group">
                         <td class="p-5">
-                            <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-widest border border-slate-200">
-                                ${item.bank}
-                            </span>
+                            <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-[10px] font-extrabold border border-slate-200 uppercase tracking-widest">${item.bank}</span>
                         </td>
                         <td class="p-5">
                             <div class="flex flex-col">
-                                <span class="text-slate-400 text-xs font-medium mono">${item.norek}</span>
-                                <span class="text-sm font-bold text-slate-800 uppercase">${item.nama}</span>
+                                <span class="text-slate-400 text-[11px] mono font-medium">${item.norek}</span>
+                                <span class="text-sm font-bold text-slate-800 uppercase tracking-tight">${item.nama}</span>
                             </div>
                         </td>
                         <td class="p-5 text-right">
-                            <span class="text-base font-black mono ${hasSaldo ? 'text-emerald-600' : 'text-slate-300'}">
+                            <span class="text-base font-black mono ${active ? 'text-emerald-600' : 'text-slate-300'}">
                                 ${formatIDR(item.saldo)}
                             </span>
                         </td>
                         <td class="p-5 text-center">
-                            <button onclick="hapus(${i})" class="text-slate-200 hover:text-red-500 transition active:scale-90">
+                            <button onclick="hapus(${i})" class="text-slate-300 hover:text-red-500 transition active:scale-90 p-2">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </td>
@@ -352,14 +355,14 @@
             
             if(s === "online") {
                 dot.className = "h-2 w-2 rounded-full bg-emerald-500";
-                txt.innerText = "System Live"; txt.className = "text-sm font-bold text-emerald-500";
+                txt.innerText = "Sistem Online"; txt.className = "text-sm font-bold text-emerald-500";
                 time.innerText = new Date().toLocaleTimeString('id-ID');
             } else if(s === "loading") {
                 dot.className = "h-2 w-2 rounded-full bg-yellow-500 status-pulse";
-                txt.innerText = "Syncing..."; txt.className = "text-sm font-bold text-yellow-500";
+                txt.innerText = "Sinkronisasi..."; txt.className = "text-sm font-bold text-yellow-500";
             } else {
                 dot.className = "h-2 w-2 rounded-full bg-red-500";
-                txt.innerText = "Sync Failed!"; txt.className = "text-sm font-bold text-red-500";
+                txt.innerText = "Koneksi Terputus"; txt.className = "text-sm font-bold text-red-500";
             }
         }
 
@@ -380,20 +383,23 @@
             const r = document.getElementById('inRek').value;
             const n = document.getElementById('inNama').value;
             if(b && r && n) {
-                dataBank.unshift({ bank: b, norek: r, nama: n, saldo: 0 });
+                dataBank.unshift({ bank: b.toUpperCase(), norek: r, nama: n, saldo: 0 });
                 renderTable(); toggleModal();
-                ambilDataSaldo(); // Re-sync setelah tambah
-            } else { alert("Isi semua bidang!"); }
+                ambilDataSaldo();
+                document.getElementById('inBank').value = '';
+                document.getElementById('inRek').value = '';
+                document.getElementById('inNama').value = '';
+            } else { alert("Lengkapi semua data!"); }
         }
 
         function hapus(i) {
-            if(confirm('Hapus rekening ini?')) {
+            if(confirm('Hapus rekening ini dari monitoring?')) {
                 dataBank.splice(i, 1);
                 renderTable();
             }
         }
 
-        // Init & Auto Refresh 60 detik
+        // Auto Refresh tiap 60 detik
         ambilDataSaldo();
         setInterval(ambilDataSaldo, 60000);
     </script>
