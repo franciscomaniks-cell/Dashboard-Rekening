@@ -3,80 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TVTOTO PRO - Final Perfect Version</title>
+    <title>TVTOTO Monitor | Advanced Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
-        .card-active { border-top: 4px solid #6366f1; transition: all 0.3s ease; }
-        .card-zero { opacity: 0.6; filter: grayscale(0.5); }
-        .custom-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
-        .status-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        :root {
+            --glass: rgba(255, 255, 255, 0.95);
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            color: #1e293b;
+        }
+
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+
+        .balance-gradient {
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+        }
+
+        .bank-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 0px solid #4f46e5;
+        }
+
+        .bank-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            border-left-width: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .animate-pulse-fast {
+            animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-10">
 
     <div class="max-w-7xl mx-auto">
-        <div class="bg-white rounded-[2rem] p-6 md:p-8 mb-8 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="flex items-center gap-4">
-                <div class="bg-indigo-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
-                    <i class="fas fa-university text-2xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">TVTOTO MONITOR</h1>
-                    <div id="statusUpdate" class="flex items-center text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
-                        <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2 status-pulse"></span>
-                        <span id="statusLabel">Menyambungkan ke Server...</span>
+        <header class="flex flex-col lg:flex-row gap-6 mb-12 items-stretch">
+            <div class="glass-card flex-grow rounded-[2.5rem] p-8 flex items-center justify-between">
+                <div class="flex items-center gap-5">
+                    <div class="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-2xl">
+                        <i class="fas fa-chart-pie text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-extrabold tracking-tighter text-slate-900 italic">TVTOTO<span class="text-indigo-600">.MONITOR</span></h1>
+                        <p class="text-slate-400 font-semibold text-xs uppercase tracking-widest flex items-center gap-2">
+                            <span class="status-dot bg-emerald-500 animate-pulse-fast"></span>
+                            System Live: <span id="lastUpdated" class="text-slate-600 lowercase">...</span>
+                        </p>
                     </div>
                 </div>
+                <div class="hidden md:block">
+                    <button onclick="loadData()" class="p-3 hover:bg-slate-100 rounded-full transition-colors">
+                        <i class="fas fa-sync-alt text-slate-400"></i>
+                    </button>
+                </div>
             </div>
-            <div class="text-center md:text-right bg-slate-50 px-8 py-4 rounded-3xl border border-slate-100">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Saldo Terdeteksi</p>
-                <h2 id="grandTotal" class="text-3xl font-[900] text-slate-900 tabular-nums">Rp 0</h2>
+
+            <div class="balance-gradient rounded-[2.5rem] p-8 text-white min-w-[320px] shadow-2xl shadow-indigo-200 flex flex-col justify-center">
+                <p class="text-indigo-100 text-[10px] font-black uppercase tracking-[0.2em] mb-2 opacity-80">Accumulated Balance</p>
+                <div class="flex items-baseline gap-2">
+                    <h2 id="grandTotal" class="text-4xl font-extrabold tracking-tight">Rp 0</h2>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex flex-col md:flex-row gap-4 mb-10">
+            <div class="relative flex-grow group">
+                <i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors"></i>
+                <input type="text" id="searchInput" onkeyup="filterCards()" 
+                    placeholder="Search accounts, names, or banks..." 
+                    class="w-full pl-16 pr-8 py-5 rounded-2xl bg-white border-none shadow-sm focus:ring-4 focus:ring-indigo-100 outline-none font-medium text-slate-600 transition-all">
+            </div>
+            <div class="glass-card px-6 py-2 rounded-2xl flex items-center gap-4 text-slate-500 font-bold text-sm">
+                <span id="activeCount">0</span> Accounts Tracked
             </div>
         </div>
 
-        <div class="relative mb-8">
-            <i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input type="text" id="searchInput" onkeyup="filterCards()" placeholder="Cari nama bank atau pemilik rekening..." 
-            class="w-full pl-16 pr-8 py-5 rounded-2xl bg-white border border-slate-200 shadow-sm focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-600 text-lg transition-all">
-        </div>
-
-        <div id="cardContainer" class="custom-grid">
+        <div id="cardContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             </div>
 
-        <div id="emptyState" class="hidden text-center py-20">
-            <div class="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-database text-slate-300 text-3xl"></i>
+        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-32 text-center">
+            <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-inner">
+                <i class="fas fa-folder-open text-slate-200 text-4xl"></i>
             </div>
-            <p class="text-slate-400 font-bold uppercase tracking-widest">Data Tidak Ditemukan</p>
+            <h3 class="text-xl font-bold text-slate-400">No matches found</h3>
+            <p class="text-slate-300">Try adjusting your search criteria</p>
         </div>
     </div>
 
     <script>
-        // Gunakan link CSV Anda
         const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/pub?gid=1655913458&single=true&output=csv';
-        
         let masterData = [];
 
         async function loadData() {
             try {
                 const response = await fetch(csvUrl);
                 const text = await response.text();
-                
-                // Smart Parsing: Mendeteksi pemisah otomatis (koma atau titik koma)
                 Papa.parse(text, {
                     header: false,
                     skipEmptyLines: true,
-                    complete: function(results) {
-                        processRows(results.data);
-                    }
+                    complete: function(results) { processRows(results.data); }
                 });
             } catch (err) {
-                document.getElementById('statusLabel').innerText = "Gagal Memuat Data";
+                console.error("Fetch failed");
             }
         }
 
@@ -84,31 +144,19 @@
             let temp = [];
             let totalAll = 0;
 
-            // STRUKTUR DATA: 
-            // Nama Rekening biasanya mengandung karakter '/' atau Nama Bank (BCA/BRI/OCBC)
-            // Saldo biasanya angka besar di kolom yang sama
-            
-            // Kita scan baris demi baris secara cerdas
             rows.forEach((row, rowIndex) => {
                 row.forEach((cell, colIndex) => {
                     let content = cell ? cell.toString().trim() : "";
-                    
-                    // Kriteria Rekening: Mengandung '/' atau kata bank utama
                     if (content.includes('/') || content.toUpperCase().includes('OCBC') || content.toUpperCase().includes('KAS')) {
-                        
-                        // Cari Saldo: Berdasarkan file Anda, saldo utama ada di Baris 11 (Index 10)
-                        // atau tepat di baris bawah untuk bagian DEPO.
                         let rawSaldo = "0";
-                        
                         if (rows[10] && rows[10][colIndex]) {
-                            rawSaldo = rows[10][colIndex]; // Untuk WD BERSIH
+                            rawSaldo = rows[10][colIndex];
                         } else if (rows[rowIndex + 1] && rows[rowIndex + 1][colIndex]) {
-                            rawSaldo = rows[rowIndex + 1][colIndex]; // Untuk DEPO
+                            rawSaldo = rows[rowIndex + 1][colIndex];
                         }
 
                         let saldoVal = parseInt(rawSaldo.replace(/[^0-9]/g, '')) || 0;
 
-                        // Validasi agar tidak memasukkan sampah data (minimal nama punya panjang 5 karakter)
                         if (content.length > 5 && !temp.some(x => x.name === content)) {
                             temp.push({
                                 name: content,
@@ -124,7 +172,8 @@
             masterData = temp;
             render(masterData);
             document.getElementById('grandTotal').innerText = formatIDR(totalAll);
-            document.getElementById('statusLabel').innerText = "Live Update: " + new Date().toLocaleTimeString();
+            document.getElementById('lastUpdated').innerText = new Date().toLocaleTimeString('id-ID');
+            document.getElementById('activeCount').innerText = temp.length;
         }
 
         function render(data) {
@@ -140,20 +189,44 @@
 
             data.sort((a, b) => b.saldo - a.saldo).forEach(item => {
                 const isZero = item.saldo === 0;
+                const bankColor = getBankColor(item.bank);
+                
                 container.innerHTML += `
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 card-active ${isZero ? 'card-zero' : ''}">
-                        <div class="flex justify-between items-start mb-4">
-                            <span class="text-[10px] font-black bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg uppercase tracking-wider">${item.bank}</span>
-                            <div class="h-2 w-2 rounded-full ${isZero ? 'bg-slate-300' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]'}"></div>
+                    <div class="glass-card p-7 rounded-[2.5rem] bank-card flex flex-col justify-between h-64 ${isZero ? 'opacity-50 grayscale' : ''}">
+                        <div class="flex justify-between items-start">
+                            <div class="px-4 py-1.5 rounded-xl text-[10px] font-extrabold uppercase tracking-widest" style="background: ${bankColor}20; color: ${bankColor}">
+                                ${item.bank}
+                            </div>
+                            <div class="w-2 h-2 rounded-full ${isZero ? 'bg-slate-300' : 'bg-emerald-500 animate-pulse-fast'}"></div>
                         </div>
-                        <h3 class="text-xs font-bold text-slate-800 uppercase mb-6 leading-relaxed h-10 overflow-hidden line-clamp-2 italic">${item.name}</h3>
-                        <div class="flex flex-col border-t border-slate-50 pt-4">
-                            <span class="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-1">Saldo Terkini</span>
-                            <span class="text-xl font-black text-slate-900 tabular-nums">${formatIDR(item.saldo)}</span>
+                        
+                        <div class="my-6">
+                            <h3 class="text-slate-800 font-bold text-sm uppercase leading-snug line-clamp-2 italic">
+                                ${item.name}
+                            </h3>
+                        </div>
+
+                        <div class="flex flex-col">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Current Balance</span>
+                            <span class="text-2xl font-extrabold text-slate-900 tabular-nums">
+                                ${formatIDR(item.saldo)}
+                            </span>
                         </div>
                     </div>
                 `;
             });
+        }
+
+        function getBankColor(bank) {
+            const colors = {
+                'BCA': '#0060ad',
+                'BRI': '#00529c',
+                'BNI': '#f15a23',
+                'MANDIRI': '#ffc20e',
+                'OCBC': '#ed1c24',
+                'DANAMON': '#ff5000'
+            };
+            return colors[bank.toUpperCase()] || '#6366f1';
         }
 
         function detectBank(str) {
@@ -161,7 +234,7 @@
             for (let b of banks) {
                 if (str.toUpperCase().includes(b)) return b;
             }
-            return "BANK";
+            return "Bank";
         }
 
         function formatIDR(val) {
@@ -174,9 +247,8 @@
             render(filtered);
         }
 
-        // Jalankan
         loadData();
-        setInterval(loadData, 60000); // Update tiap 1 menit
+        setInterval(loadData, 60000);
     </script>
 </body>
 </html>
