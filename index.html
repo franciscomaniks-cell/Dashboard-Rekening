@@ -3,112 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TVTOTO | Smart Bank Monitoring</title>
+    <title>TVTOTO | Monitoring Saldo Live</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap');
-        
-        body { font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .animate-spin-slow { animation: spin 4s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        
-        /* Custom Scrollbar */
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 10px; }
+        .status-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .table-container { height: calc(100vh - 380px); overflow-y: auto; }
     </style>
 </head>
-<body class="bg-[#f8fafc] text-slate-800">
+<body class="text-slate-900">
 
     <div class="flex min-h-screen">
-        <aside class="w-72 bg-indigo-950 text-white p-8 hidden lg:flex flex-col shrink-0 shadow-2xl sticky top-0 h-screen">
-            <div class="flex items-center gap-3 mb-12">
-                <div class="bg-indigo-500 p-2 rounded-xl shadow-lg shadow-indigo-500/30">
-                    <i class="fas fa-chart-line text-xl"></i>
-                </div>
-                <h1 class="text-2xl font-black italic tracking-tighter">TVTOTO<span class="text-indigo-400">.</span></h1>
+        <aside class="w-72 bg-[#0f172a] text-white p-8 hidden lg:flex flex-col sticky top-0 h-screen shadow-2xl">
+            <div class="mb-10 text-center">
+                <h1 class="text-3xl font-extrabold tracking-tighter italic text-indigo-400">TVTOTO<span class="text-white">PRO</span></h1>
+                <p class="text-[10px] uppercase tracking-[0.3em] font-bold text-slate-500 mt-2">Monitoring System v2.0</p>
             </div>
-            
-            <nav class="space-y-1 flex-1">
-                <div class="py-3 px-4 rounded-xl bg-indigo-900/50 border border-indigo-800 mb-6">
-                    <div class="flex items-center justify-between text-xs font-bold text-indigo-300 uppercase tracking-widest mb-2">
-                        <span>Connection</span>
-                        <span id="pingDot" class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+
+            <div class="space-y-4">
+                <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Server Status</span>
+                        <div id="statusDot" class="h-2 w-2 rounded-full bg-yellow-500 status-pulse"></div>
                     </div>
-                    <div id="statusIndicator" class="text-sm font-medium text-emerald-400">Connected System</div>
+                    <p id="statusText" class="text-sm font-semibold text-yellow-500 italic">Connecting...</p>
                 </div>
 
-                <a href="#" class="flex items-center gap-3 py-3 px-4 rounded-xl bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-600/20 transition">
-                    <i class="fas fa-th-large text-indigo-200"></i> Main Dashboard
-                </a>
-            </nav>
+                <div class="bg-indigo-600/10 p-4 rounded-2xl border border-indigo-500/30">
+                    <p class="text-[10px] font-bold text-indigo-400 uppercase mb-1">Last Update</p>
+                    <p id="syncTime" class="text-xs mono text-indigo-200">--:--:--</p>
+                </div>
+            </div>
 
-            <div class="mt-auto pt-6 border-t border-indigo-900">
-                <p class="text-[10px] text-indigo-400 font-bold uppercase mb-2">Last Sync</p>
-                <p id="lastUpdateText" class="text-xs font-mono text-indigo-200 uppercase">--:--:--</p>
+            <div class="mt-auto border-t border-slate-800 pt-6">
+                <button onclick="ambilDataSaldo()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-95">
+                    <i class="fas fa-sync-alt mr-2"></i> Paksa Sinkron
+                </button>
             </div>
         </aside>
 
-        <main class="flex-1 p-6 lg:p-12">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
-                <div>
-                    <h2 class="text-3xl font-extrabold tracking-tight text-slate-900">Informasi Rekening</h2>
-                    <p class="text-slate-500 mt-1 font-medium italic">Live data synchronization from Google Sheets</p>
+        <main class="flex-1 p-6 lg:p-10">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 flex items-center gap-5">
+                    <div class="bg-indigo-100 text-indigo-600 w-14 h-14 rounded-2xl flex items-center justify-center text-2xl">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Saldo Terpantau</p>
+                        <h3 id="totalSaldo" class="text-2xl font-extrabold mono tracking-tighter">Rp 0</h3>
+                    </div>
                 </div>
-                <div class="flex items-center gap-3">
-                    <button onclick="ambilDataSaldo()" class="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-5 py-3 rounded-2xl hover:bg-slate-50 font-bold transition shadow-sm active:scale-95">
-                        <i class="fas fa-sync-alt text-indigo-600"></i> Refresh
-                    </button>
-                    <button onclick="toggleModal()" class="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 font-bold transition active:scale-95">
-                        <i class="fas fa-plus"></i> Tambah Bank
+
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 flex items-center gap-5">
+                    <div class="bg-emerald-100 text-emerald-600 w-14 h-14 rounded-2xl flex items-center justify-center text-2xl">
+                        <i class="fas fa-university"></i>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Rekening</p>
+                        <h3 id="totalBank" class="text-2xl font-extrabold mono tracking-tighter">0</h3>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 flex items-center justify-center">
+                    <button onclick="toggleModal()" class="w-full h-full bg-slate-900 text-white rounded-2xl font-bold hover:bg-indigo-600 transition flex items-center justify-center gap-2">
+                        <i class="fas fa-plus-circle"></i> Tambah Data
                     </button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 relative overflow-hidden group">
-                    <div class="relative z-10">
-                        <p class="text-slate-400 text-xs font-black uppercase tracking-[0.2em]">Total Saldo Terpantau</p>
-                        <p id="totalSaldo" class="text-4xl font-black text-slate-900 mt-3 mono tracking-tighter">Rp 0</p>
-                    </div>
-                    <div class="absolute -right-4 -bottom-4 bg-indigo-50 w-24 h-24 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <i class="fas fa-wallet text-indigo-200 text-4xl"></i>
-                    </div>
-                </div>
-                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 relative overflow-hidden group">
-                    <div class="relative z-10">
-                        <p class="text-slate-400 text-xs font-black uppercase tracking-[0.2em]">Total Rekening</p>
-                        <p id="totalBank" class="text-4xl font-black text-slate-900 mt-3 mono tracking-tighter">0</p>
-                    </div>
-                    <div class="absolute -right-4 -bottom-4 bg-emerald-50 w-24 h-24 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <i class="fas fa-university text-emerald-200 text-4xl"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="relative mb-8">
+            <div class="relative mb-6">
                 <i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Cari Nama Akun, No. Rekening, atau Bank..." 
-                class="w-full pl-14 pr-6 py-5 bg-white border border-slate-100 rounded-[1.5rem] shadow-sm focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition font-medium">
+                <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Cari nama, rekening, atau bank..." 
+                class="w-full pl-14 pr-6 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition">
             </div>
 
-            <div class="bg-white rounded-[2rem] shadow-2xl shadow-slate-200/50 overflow-hidden border border-slate-100">
-                <div class="overflow-x-auto custom-scroll max-h-[600px]">
+            <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
+                <div class="table-container custom-scroll">
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-50/80 sticky top-0 z-20 backdrop-blur-md">
+                        <thead class="bg-slate-50 sticky top-0 z-10">
                             <tr>
-                                <th class="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100">Bank</th>
-                                <th class="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100">Informasi Akun</th>
-                                <th class="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100 text-right">Saldo Terakhir</th>
-                                <th class="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100 text-center">Aksi</th>
+                                <th class="p-5 text-[10px] font-black uppercase text-slate-400 border-b">Provider</th>
+                                <th class="p-5 text-[10px] font-black uppercase text-slate-400 border-b">Detail Akun</th>
+                                <th class="p-5 text-[10px] font-black uppercase text-slate-400 border-b text-right">Saldo Live</th>
+                                <th class="p-5 text-[10px] font-black uppercase text-slate-400 border-b text-center">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody" class="divide-y divide-slate-50">
+                        <tbody id="tableBody" class="divide-y divide-slate-100">
                             </tbody>
                     </table>
                 </div>
@@ -116,37 +101,27 @@
         </main>
     </div>
 
-    <div id="modal" class="fixed inset-0 bg-slate-900/60 hidden backdrop-blur-md flex items-center justify-center z-50 p-4">
-        <div class="bg-white p-10 rounded-[2.5rem] w-full max-w-md shadow-2xl transform transition-all animate-in zoom-in-95 duration-300">
-            <h3 class="text-2xl font-black mb-8 text-slate-900 flex items-center italic">
-                <span class="bg-indigo-100 text-indigo-600 w-10 h-10 rounded-xl flex items-center justify-center mr-3 not-italic"><i class="fas fa-plus"></i></span>
-                INPUT REKENING
-            </h3>
-            <div class="space-y-5">
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Provider Bank</label>
-                    <input type="text" id="inputBank" placeholder="BCA, BRI, MANDIRI..." class="w-full p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold">
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Nomor Rekening</label>
-                    <input type="text" id="inputNoRek" placeholder="000111222..." class="w-full p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold mono">
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Nama Pemilik Akun</label>
-                    <input type="text" id="inputNama" placeholder="Sesuai Spreadsheet..." class="w-full p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold">
-                </div>
-                <div class="flex gap-4 pt-6">
-                    <button onclick="simpanData()" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-600/20 active:scale-95">SIMPAN DATA</button>
-                    <button onclick="toggleModal()" class="flex-1 bg-slate-100 text-slate-500 py-4 rounded-2xl font-bold hover:bg-slate-200 transition active:scale-95">BATAL</button>
+    <div id="modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2.5rem] p-10 w-full max-w-md shadow-2xl">
+            <h2 class="text-2xl font-extrabold mb-6 flex items-center gap-3">
+                <i class="fas fa-plus-square text-indigo-600"></i> Rekening Baru
+            </h2>
+            <div class="space-y-4">
+                <input type="text" id="inBank" placeholder="Nama Bank (BCA, BRI...)" class="w-full p-4 bg-slate-50 rounded-xl border border-slate-100 outline-none focus:border-indigo-500 font-bold uppercase text-xs">
+                <input type="text" id="inRek" placeholder="Nomor Rekening" class="w-full p-4 bg-slate-50 rounded-xl border border-slate-100 outline-none focus:border-indigo-500 font-bold mono text-xs">
+                <input type="text" id="inNama" placeholder="Nama Akun (Harus Sama dengan Excel)" class="w-full p-4 bg-slate-50 rounded-xl border border-slate-100 outline-none focus:border-indigo-500 font-bold text-xs uppercase">
+                <div class="flex gap-3 pt-4">
+                    <button onclick="simpanData()" class="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-bold">SIMPAN</button>
+                    <button onclick="toggleModal()" class="flex-1 bg-slate-100 text-slate-500 py-4 rounded-xl font-bold">BATAL</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // MASUKKAN LINK CSV PUBLISH TO WEB ANDA DISINI
         const sheetCSVUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/pub?gid=1655913458&single=true&output=csv';
 
-        // Data Bank yang disempurnakan (Lengkap sesuai input Anda)
         let dataBank = [
             { bank: "OCBC", norek: "621810071939", nama: "Raisah Bt Rali", saldo: 0 },
             { bank: "OCBC", norek: "624810073756", nama: "Jerry Rand", saldo: 0 },
@@ -281,68 +256,82 @@
         ];
 
         async function ambilDataSaldo() {
-            updateStatusUI("loading");
+            updateStatus("loading");
             try {
-                const response = await fetch(sheetCSVUrl);
+                // Tambahkan Timestamp agar tidak terkena Cache Browser
+                const response = await fetch(`${sheetCSVUrl}&cachebuster=${Date.now()}`);
                 const csvData = await response.text();
                 
                 Papa.parse(csvData, {
                     header: false,
                     skipEmptyLines: true,
                     complete: function(results) {
-                        prosesDataSheet(results.data);
-                        updateStatusUI("online");
+                        prosesData(results.data);
+                        updateStatus("online");
                     }
                 });
-            } catch (e) {
-                updateStatusUI("offline");
+            } catch (err) {
+                updateStatus("offline");
             }
         }
 
-        function prosesDataSheet(rows) {
+        function prosesData(rows) {
             dataBank.forEach(bank => {
-                bank.saldo = 0;
-                // Logika pencarian cerdas di seluruh baris sheet
-                const barisCocok = rows.find(r => 
-                    r.some(cell => cell.toString().toUpperCase().includes(bank.nama.toUpperCase()))
+                bank.saldo = 0; // Reset dulu
+                
+                // Cari baris yang mengandung Nama Akun (Case Insensitive)
+                const baris = rows.find(r => 
+                    r.some(cell => {
+                        const cellVal = cell.toString().toLowerCase().trim();
+                        const targetNama = bank.nama.toLowerCase().trim();
+                        return cellVal.includes(targetNama) || targetNama.includes(cellVal);
+                    })
                 );
 
-                if (barisCocok) {
-                    // Ambil angka terbesar di baris tersebut (asumsi itu adalah saldo)
-                    const angkaSalos = barisCocok.map(c => parseInt(c.toString().replace(/[^0-9]/g, '')) || 0);
-                    bank.saldo = Math.max(...angkaSalos.filter(n => n > 1000), 0);
+                if (baris) {
+                    // Cari angka di dalam baris tersebut yang nilainya paling besar (asumsi itu saldo)
+                    let nilaiTerbesar = 0;
+                    baris.forEach(cell => {
+                        const cleanNum = parseInt(cell.toString().replace(/[^0-9]/g, '')) || 0;
+                        if (cleanNum > nilaiTerbesar) nilaiTerbesar = cleanNum;
+                    });
+                    
+                    // Validasi: Saldo biasanya di atas 1000 rupiah
+                    bank.saldo = nilaiTerbesar > 100 ? nilaiTerbesar : 0;
                 }
             });
             renderTable();
         }
 
-        function renderTable(displayData = dataBank) {
-            const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = '';
-            let grandTotal = 0;
+        function renderTable(list = dataBank) {
+            const body = document.getElementById('tableBody');
+            body.innerHTML = '';
+            let total = 0;
 
-            displayData.forEach((item, idx) => {
-                grandTotal += item.saldo;
-                const isReady = item.saldo > 0;
-                
-                tableBody.innerHTML += `
-                    <tr class="group hover:bg-slate-50 transition">
-                        <td class="p-6">
-                            <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-200">${item.bank}</span>
+            list.forEach((item, i) => {
+                total += item.saldo;
+                const hasSaldo = item.saldo > 0;
+
+                body.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition group">
+                        <td class="p-5">
+                            <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-widest border border-slate-200">
+                                ${item.bank}
+                            </span>
                         </td>
-                        <td class="p-6">
+                        <td class="p-5">
                             <div class="flex flex-col">
-                                <span class="text-xs font-bold text-slate-400 mono tracking-tighter">${item.norek}</span>
-                                <span class="text-sm font-extrabold text-slate-800 uppercase group-hover:text-indigo-600 transition">${item.nama}</span>
+                                <span class="text-slate-400 text-xs font-medium mono">${item.norek}</span>
+                                <span class="text-sm font-bold text-slate-800 uppercase">${item.nama}</span>
                             </div>
                         </td>
-                        <td class="p-6 text-right">
-                            <span class="text-base font-black mono ${isReady ? 'text-emerald-600' : 'text-slate-300'}">
+                        <td class="p-5 text-right">
+                            <span class="text-base font-black mono ${hasSaldo ? 'text-emerald-600' : 'text-slate-300'}">
                                 ${formatIDR(item.saldo)}
                             </span>
                         </td>
-                        <td class="p-6 text-center">
-                            <button onclick="hapusData(${idx})" class="text-slate-300 hover:text-red-500 transition active:scale-90">
+                        <td class="p-5 text-center">
+                            <button onclick="hapus(${i})" class="text-slate-200 hover:text-red-500 transition active:scale-90">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </td>
@@ -350,63 +339,61 @@
                 `;
             });
 
-            document.getElementById('totalSaldo').innerText = formatIDR(grandTotal);
-            document.getElementById('totalBank').innerText = displayData.length;
+            document.getElementById('totalSaldo').innerText = formatIDR(total);
+            document.getElementById('totalBank').innerText = list.length;
         }
 
-        function formatIDR(val) {
-            return "Rp " + new Intl.NumberFormat('id-ID').format(val);
+        function formatIDR(v) { return "Rp " + new Intl.NumberFormat('id-ID').format(v); }
+
+        function updateStatus(s) {
+            const dot = document.getElementById('statusDot');
+            const txt = document.getElementById('statusText');
+            const time = document.getElementById('syncTime');
+            
+            if(s === "online") {
+                dot.className = "h-2 w-2 rounded-full bg-emerald-500";
+                txt.innerText = "System Live"; txt.className = "text-sm font-bold text-emerald-500";
+                time.innerText = new Date().toLocaleTimeString('id-ID');
+            } else if(s === "loading") {
+                dot.className = "h-2 w-2 rounded-full bg-yellow-500 status-pulse";
+                txt.innerText = "Syncing..."; txt.className = "text-sm font-bold text-yellow-500";
+            } else {
+                dot.className = "h-2 w-2 rounded-full bg-red-500";
+                txt.innerText = "Sync Failed!"; txt.className = "text-sm font-bold text-red-500";
+            }
         }
 
         function searchTable() {
-            const q = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = dataBank.filter(i => 
-                i.nama.toLowerCase().includes(q) || 
-                i.norek.includes(q) || 
-                i.bank.toLowerCase().includes(q)
+            const val = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = dataBank.filter(x => 
+                x.nama.toLowerCase().includes(val) || 
+                x.norek.includes(val) || 
+                x.bank.toLowerCase().includes(val)
             );
             renderTable(filtered);
-        }
-
-        function updateStatusUI(state) {
-            const ind = document.getElementById('statusIndicator');
-            const dot = document.getElementById('pingDot');
-            const time = document.getElementById('lastUpdateText');
-            
-            if(state === "online") {
-                ind.innerText = "System Live"; ind.className = "text-sm font-medium text-emerald-400";
-                dot.className = "h-2 w-2 rounded-full bg-emerald-500 animate-pulse";
-                time.innerText = new Date().toLocaleTimeString();
-            } else if(state === "loading") {
-                ind.innerText = "Syncing Data..."; ind.className = "text-sm font-medium text-yellow-400";
-                dot.className = "h-2 w-2 rounded-full bg-yellow-400 animate-spin-slow";
-            } else {
-                ind.innerText = "Connection Lost"; ind.className = "text-sm font-medium text-red-400";
-                dot.className = "h-2 w-2 rounded-full bg-red-500";
-            }
         }
 
         function toggleModal() { document.getElementById('modal').classList.toggle('hidden'); }
 
         function simpanData() {
-            const b = document.getElementById('inputBank').value;
-            const r = document.getElementById('inputNoRek').value;
-            const n = document.getElementById('inputNama').value;
+            const b = document.getElementById('inBank').value;
+            const r = document.getElementById('inRek').value;
+            const n = document.getElementById('inNama').value;
             if(b && r && n) {
                 dataBank.unshift({ bank: b, norek: r, nama: n, saldo: 0 });
                 renderTable(); toggleModal();
-                document.querySelectorAll('input').forEach(i => i.value = '');
-            }
+                ambilDataSaldo(); // Re-sync setelah tambah
+            } else { alert("Isi semua bidang!"); }
         }
 
-        function hapusData(i) {
-            if(confirm('Hapus rekening ini dari monitor?')) {
+        function hapus(i) {
+            if(confirm('Hapus rekening ini?')) {
                 dataBank.splice(i, 1);
                 renderTable();
             }
         }
 
-        // Init
+        // Init & Auto Refresh 60 detik
         ambilDataSaldo();
         setInterval(ambilDataSaldo, 60000);
     </script>
