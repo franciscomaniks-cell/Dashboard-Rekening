@@ -6,7 +6,95 @@
     <title>TVTOTO ULTRA | Enterprise Monitoring</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script>
+/* ===============================
+   NORMALIZER
+================================ */
+function normalizeName(name) {
+    return name
+        .toUpperCase()
+        .split('/')[0]
+        .replace(/\s+/g,' ')
+        .trim();
+}
+
+/* ===============================
+   JSONP GOOGLE SHEETS (NO CORS)
+================================ */
+function syncData() {
+    log("🔄 Sinkronisasi Google Sheet...");
+    const old = document.getElementById('jsonp');
+    if (old) old.remove();
+
+    const s = document.createElement('script');
+    s.id = 'jsonp';
+    s.src =
+        'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/gviz/tq' +
+        '?gid=1655913458&tqx=out:json&callback=sheetCallback&_=' + Date.now();
+
+    document.body.appendChild(s);
+}
+
+/* ===============================
+   CALLBACK
+================================ */
+function sheetCallback(resp) {
+    const rows = [];
+    const table = resp.table;
+
+    for (let r = 0; r < table.rows.length; r++) {
+        const row = [];
+        for (let c = 0; c < table.cols.length; c++) {
+            row.push(table.rows[r].c[c]?.v ?? '');
+        }
+        rows.push(row);
+    }
+    processSync(rows);
+}
+
+/* ===============================
+   ENGINE SALDO (AKURAT)
+================================ */
+function processSync(rows) {
+    let total = 0;
+
+    masterNodes.forEach(node => {
+        node.lastSaldo = node.saldo;
+        node.saldo = 0;
+
+        const target = normalizeName(node.nama);
+
+        for (const row of rows) {
+            const namaCell = row[1];
+            if (!namaCell) continue;
+
+            const sheetName = normalizeName(namaCell.toString());
+            if (!sheetName.includes(target)) continue;
+
+            // SALDO = KOLOM PALING KANAN
+            const saldoCell = row[row.length - 1];
+            const saldo = parseInt(
+                saldoCell?.toString().replace(/[^\d]/g,'')
+            ) || 0;
+
+            node.saldo = saldo;
+            break;
+        }
+        total += node.saldo;
+    });
+
+    render();
+    document.getElementById('totalAll').innerText = formatIDR(total);
+    document.getElementById('nodeCount').innerText = masterNodes.length;
+    log("✅ Sinkronisasi sukses (" + masterNodes.length + " rekening)");
+}
+
+/* ===============================
+   AUTO
+================================ */
+syncData();
+setInterval(syncData, 60000);
+</script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --bg: #020617; --accent: #6366f1; }
@@ -347,3 +435,4 @@
     </script>
 </body>
 </html>
+
