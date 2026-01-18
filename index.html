@@ -2,100 +2,54 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TVTOTO ULTRA | Enterprise Monitoring</title>
+    <title>TVTOTO ULTRA MONITORING</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
-        :root { --bg: #020617; --accent: #6366f1; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: #f8fafc; overflow: hidden; }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
-        .table-scroll { height: calc(100vh - 280px); overflow-y: auto; }
-        .table-scroll::-webkit-scrollbar { width: 3px; }
-        .table-scroll::-webkit-scrollbar-thumb { background: #334155; }
-        .status-pulse { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        .row-update { animation: flash 1s ease-out; }
-        @keyframes flash { from { background: rgba(16, 185, 129, 0.2); } to { background: transparent; } }
+        body { background-color: #0f172a; color: white; font-family: sans-serif; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .row-update { animation: highlight 2s ease-out; }
+        @keyframes highlight { from { background: rgba(52, 211, 153, 0.3); } to { background: transparent; } }
     </style>
 </head>
-<body class="p-6">
-
-    <div class="max-w-[1700px] mx-auto flex flex-col gap-6 h-full">
-        <header class="flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                    <i class="fas fa-server text-white text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-black tracking-tighter">TVTOTO <span class="text-indigo-500">ULTRA</span></h1>
-                    <div class="flex items-center gap-2">
-                        <span id="syncStatus" class="flex items-center gap-1.5 text-[10px] font-bold text-emerald-500 uppercase">
-                            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full status-pulse"></span> System Live
-                        </span>
-                    </div>
-                </div>
+<body class="p-4">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-center mb-6 glass p-6 rounded-2xl">
+            <div>
+                <h1 class="text-2xl font-bold text-indigo-400">TVTOTO <span class="text-white">ULTRA v5.0</span></h1>
+                <p id="status" class="text-xs text-slate-400 font-mono">Menghubungkan ke database...</p>
             </div>
-
-            <div class="flex gap-4">
-                <div class="glass px-6 py-3 rounded-2xl border-l-4 border-indigo-500">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Global Balance</p>
-                    <h2 id="totalAll" class="text-2xl font-black mono text-white">Rp 0</h2>
-                </div>
-                <div class="glass px-6 py-3 rounded-2xl border-l-4 border-emerald-500">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Active Nodes</p>
-                    <h2 id="nodeCount" class="text-2xl font-black mono text-white">0</h2>
-                </div>
+            <div class="text-right">
+                <p class="text-xs text-slate-400 uppercase font-bold tracking-widest">Total Asset Seluruh Bank</p>
+                <h2 id="totalAll" class="text-3xl font-black text-emerald-400">Rp 0</h2>
             </div>
-        </header>
+        </div>
 
-        <div class="grid grid-cols-12 gap-6 overflow-hidden flex-1">
-            <div class="col-span-3 flex flex-col gap-6">
-                <div class="glass rounded-3xl p-6 overflow-hidden">
-                    <h3 class="text-xs font-black text-slate-500 uppercase mb-4 tracking-widest">Bank Network</h3>
-                    <div id="bankStats" class="space-y-4"></div>
-                </div>
-                <div class="glass rounded-3xl p-6 flex-1 overflow-hidden flex flex-col">
-                    <h3 class="text-xs font-black text-slate-500 uppercase mb-4 tracking-widest">Live Activity</h3>
-                    <div id="logs" class="text-[10px] mono text-slate-500 space-y-2 overflow-y-auto"></div>
-                </div>
-            </div>
+        <div class="mb-4 flex gap-4">
+            <input type="text" id="search" onkeyup="filterTable()" placeholder="Cari Nama atau Rekening..." class="flex-1 bg-slate-800 border border-slate-700 p-3 rounded-xl outline-none focus:border-indigo-500">
+            <button onclick="fetchData()" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-3 rounded-xl font-bold transition">REFRESH DATA</button>
+        </div>
 
-            <div class="col-span-9 glass rounded-[2rem] flex flex-col overflow-hidden border border-white/5">
-                <div class="p-6 bg-white/5 border-b border-white/5 flex justify-between items-center">
-                    <div class="relative w-96">
-                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                        <input type="text" id="search" onkeyup="filter()" placeholder="Search terminal..." class="w-full bg-slate-950 border border-white/10 rounded-xl py-2.5 pl-12 pr-4 text-sm focus:border-indigo-500 outline-none">
-                    </div>
-                    <button onclick="syncData()" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
-                        <i class="fas fa-sync-alt"></i> FORCE SYNC
-                    </button>
-                </div>
-                <div class="table-scroll">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="sticky top-0 bg-slate-900 z-10">
-                            <tr class="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5">
-                                <th class="p-5">Bank</th>
-                                <th class="p-5">Account Name / Identity</th>
-                                <th class="p-5 text-right">Current Balance</th>
-                                <th class="p-5 text-center">Protocol</th>
-                            </tr>
-                        </thead>
-                        <tbody id="mainTable" class="divide-y divide-white/[0.02]"></tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="glass rounded-2xl overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-800/50 text-slate-400 text-xs uppercase tracking-tighter">
+                        <th class="p-4">BANK</th>
+                        <th class="p-4">REKENING / NAMA</th>
+                        <th class="p-4 text-right">SALDO TERDETEKSI</th>
+                    </tr>
+                </thead>
+                <tbody id="mainTable" class="divide-y divide-white/5">
+                    </tbody>
+            </table>
         </div>
     </div>
 
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/pub?gid=1655913458&single=true&output=csv';
-        
-        // Database Data Terintegrasi
-        let masterNodes = [
+
+        // Seluruh data yang anda berikan (140+ Akun)
+        let masterData = [
             { bank: "OCBC", norek: "621810071939", nama: "Raisah Bt Rali" },
             { bank: "OCBC", norek: "624810073756", nama: "Jerry Rand" },
             { bank: "SINARMAS", norek: "59567365", nama: "Raisah Bt Rali" },
@@ -145,4 +99,173 @@
             { bank: "BCA", norek: "5860564442", nama: "WD BARU BCA G13 / MUHAMAD RIZKY" },
             { bank: "BCA", norek: "0031438801", nama: "WD BARU BCA G14 / KHESYA ALEYA PUTRI" },
             { bank: "BCA", norek: "3110139623", nama: "WD BARU BCA G15 / M. DANI ABDUL MANAP" },
-            { bank: "BCA", norek: "0010824427", 
+            { bank: "BCA", norek: "0010824427", nama: "WD BARU BCA G16 / ROBBY KUSUMA" },
+            { bank: "BCA", norek: "0740187309", nama: "WD BARU BCA G17 / RIZKI APRIADI" },
+            { bank: "BCA", norek: "7680835416", nama: "WD BARU BCA G18 / MARTHEN JEVERSON DJAWE MONE" },
+            { bank: "BCA", norek: "1790386759", nama: "WD BARU BCA G20 / Suhaeriah" },
+            { bank: "BCA", norek: "1790387275", nama: "WD BARU BCA G21 / Iwan" },
+            { bank: "BCA", norek: "2290700895", nama: "WD BARU BCA G22 / AHMAD SYAUKI" },
+            { bank: "BCA", norek: "4670456922", nama: "WD BARU BCA G23 / RAFLY FADILLAH" },
+            { bank: "BCA", norek: "2453648117", nama: "WD BARU BCA G24 / WIKA ISMAWATII" },
+            { bank: "BCA", norek: "0020325941", nama: "WD BARU BCA G25 / GUSTIAN" },
+            { bank: "BCA", norek: "5781171892", nama: "WD BARU BCA G26 / APRILIANTO" },
+            { bank: "BCA", norek: "6087026304", nama: "WD BARU BCA G27 / Saeful Anwar" },
+            { bank: "BCA", norek: "4871057936", nama: "WD BARU BCA G28 / Irham Permana Solehudin" },
+            { bank: "BCA", norek: "4120398186", nama: "WD BARU BCA G29 / HAMDAN" },
+            { bank: "BCA", norek: "7655625119", nama: "WD BARU BCA G30 / IRWAN KURNIAWAN" },
+            { bank: "BCA", norek: "4120398526", nama: "WD BARU BCA G31 / ARVAN AVANDI" },
+            { bank: "BCA", norek: "5411607802", nama: "WD BARU BCA G32 / Muhaddad" },
+            { bank: "BCA", norek: "4871055585", nama: "WD BARU BCA G33 / Muhammad Noerchalik" },
+            { bank: "BCA", norek: "1610170869", nama: "WD BARU BCA G34 / Muhammad Khairul Ummam" },
+            { bank: "BCA", norek: "7030454558", nama: "WD BARU BCA G36 / SUGENG WIDODO" },
+            { bank: "BCA", norek: "6920300063", nama: "WD BARU BCA G37 / MISDA" },
+            { bank: "BCA", norek: "2453647561", nama: "WD BARU BCA G38 / ROHILAH" },
+            { bank: "BCA", norek: "4810368697", nama: "WD BARU BCA G39 / DAVIEN JOE WIJAYA" },
+            { bank: "BCA", norek: "5411606288", nama: "WD BARU BCA G40 / NURHADI" },
+            { bank: "BCA", norek: "5195214333", nama: "WD BARU BCA G41 / EFI REFLINI" },
+            { bank: "BCA", norek: "8011098258", nama: "WD BARU BCA G42 / RANI SYAFRINA" },
+            { bank: "BCA", norek: "6920300209", nama: "WD BARU BCA G43 / NURASIAH" },
+            { bank: "BCA", norek: "5885270244", nama: "WD BARU BCA G44 / DEVIN FERNANDO" },
+            { bank: "BCA", norek: "2530408348", nama: "WD BARU BCA G45 / AHMAD ALTHOF" },
+            { bank: "BCA", norek: "0690669722", nama: "WD BARU BCA G46/ Mafiyah" },
+            { bank: "BCA", norek: "0562522768", nama: "WD BARU BCA G47/ ALVIN SULHAN HADI" },
+            { bank: "BCA", norek: "6085042339", nama: "WD BARU BCA G48 / AKHMAD GHIFARI AKBAR" },
+            { bank: "BCA", norek: "8780524589", nama: "WD BARU BCA G49 / Illham Alamsyah" },
+            { bank: "BCA", norek: "7680844512", nama: "WD BARU BCA G50 / YULIANA" },
+            { bank: "BCA", norek: "7680843931", nama: "WD BARU BCA G51 / EKARIANSYAH HIDAYAT" },
+            { bank: "BCA", norek: "0010828023", nama: "WD BARU BCA G52 / LESMANA" },
+            { bank: "BCA", norek: "5411663737", nama: "WD BARU BCA G53 / LIF IFADILAH" },
+            { bank: "BCA", norek: "7131809968", nama: "WD BARU BCA G55 / ROSITA" },
+            { bank: "BCA", norek: "7560501441", nama: "WD BARU BCA G56 / WARNIAH" },
+            { bank: "BCA", norek: "3420783166", nama: "WD BARU BCA G57 / RAMA SETIADI" },
+            { bank: "BCA", norek: "4160830366", nama: "WD BARU BCA G58 / FITRI NURJANAH" },
+            { bank: "BCA", norek: "2453716031", nama: "WD BARU BCA G59 / RIFAL HERIANA" },
+            { bank: "BCA", norek: "1790403432", nama: "WD BARU BCA G60 / MUHAMAT ARDIANSYAH" },
+            { bank: "BCA", norek: "1751292550", nama: "WD BARU BCA G61 / Mega Alas Tina Wati" },
+            { bank: "BCA", norek: "1751291723", nama: "WD BARU BCA G62 / RIATNO" },
+            { bank: "BCA", norek: "8288140182", nama: "WD BARU BCA G63 / MUHAMMAD AWALLUDIN AKMAL" },
+            { bank: "BCA", norek: "7006734170", nama: "WD BARU BCA G64 / SRI NING MULIANI" },
+            { bank: "MANDIRI", norek: "1190011421540", nama: "WD MANDIRI G2 / DAVINA RAMADANI" },
+            { bank: "MANDIRI", norek: "1150010874842", nama: "WD MANDIRI G3 / Rifal Afrian" },
+            { bank: "MANDIRI", norek: "1150011255686", nama: "WD MANDIRI G4 / SURYANTO" },
+            { bank: "MANDIRI", norek: "1630014077211", nama: "WD MANDIRI G5 / TBMULYANA" },
+            { bank: "MANDIRI", norek: "1180014679384", nama: "WD MANDIRI G6 / Nur hayati" },
+            { bank: "BRI", norek: "121001003000530", nama: "WD BRI G1 / INDRA PUTRA JAYA" },
+            { bank: "BRI", norek: "036801079333503", nama: "WD BRI G2 / I Wayan Wardana" },
+            { bank: "BRI", norek: "086301004767507", nama: "WD BRI G3 / CHINTYA CIKAL NURSAID" },
+            { bank: "BRI", norek: "385401005401504", nama: "WD BRI G4 / Febri Nurfitri Ramadhani" },
+            { bank: "BRI", norek: "529601007842508", nama: "WD BRI G5 / NATALDO K.P,GULO" },
+            { bank: "BRI", norek: "040401020446531", nama: "WD BRI G7 / MANGARA JOYAKHIN SIMANJUNTAK" },
+            { bank: "BRI", norek: "133301010153508", nama: "WD BRI G8 / RIO EL FAHMIE LIZAM" },
+            { bank: "BRI", norek: "040401067487506", nama: "WD BRI G9 / CUT MEUTHIA RAHMADHINA" },
+            { bank: "BRI", norek: "529601007841502", nama: "WD BRI G10 / GABRIEL IMMANUEL SIBAGARIANG" },
+            { bank: "BRI", norek: "033601159160506", nama: "WD BRI G11 / ERDIO RAVA DZHWAN" },
+            { bank: "BRI", norek: "529601007850501", nama: "WD BRI G12 / FELLY YOSAFAT SIHOMBING" },
+            { bank: "BRI", norek: "529601007838509", nama: "WD BRI G13 / MICHAEL JUNIOR HUTAGAOL" },
+            { bank: "BRI", norek: "040401068331504", nama: "WD BRI G14 / ERWIN HUTABARAT" },
+            { bank: "BNI", norek: "1924606390", nama: "WD BNI / G2 Dede Hardiansyah" },
+            { bank: "BNI", norek: "1924233315", nama: "WD BNI / G3 Ujang" },
+            { bank: "BNI", norek: "1924651785", nama: "WD BNI / G4 Eka Sofiana" },
+            { bank: "BNI", norek: "1951788626", nama: "WD BNI / G5 RISMAWATI" },
+            { bank: "BNI", norek: "1958533545", nama: "WD BNI / G6 BAGAS ARIA TRISNA" },
+            { bank: "BNI", norek: "1958554963", nama: "WD BNI / G7 VITO PRAMANA SAPUTRA" },
+            { bank: "BNI", norek: "1958554384", nama: "WD BNI / G8 SURYA WIJAYA" },
+            { bank: "BNI", norek: "1992948425", nama: "WD BNI / G9 SUNARYA" },
+            { bank: "BNI", norek: "1992953999", nama: "WD BNI / G10 KEVIN MAULANA LUBIS" },
+            { bank: "BNI", norek: "1992980672", nama: "WD BNI / G11 MEMES FIRA DWIYANA" },
+            { bank: "CIMB", norek: "708197093600", nama: "WD CIMB G1 / CECAR SARAMBU KUSUMO SUNDUN" },
+            { bank: "CIMB", norek: "708256271300", nama: "WD CIMB G2 / DWI GILANG RAMADHAN" },
+            { bank: "CIMB", norek: "708355880900", nama: "WD CIMB G3 / Erni Kisdiana" },
+            { bank: "CIMB", norek: "708465826600", nama: "WD CIMB G4 / FADILLA CHAIRUNNISA" },
+            { bank: "DANAMON", norek: "3693534160", nama: "WD DANAMON G1 / QOUBUS AKBAR ZAHRAN" },
+            { bank: "DANAMON", norek: "903693140786", nama: "WD DANAMON G2 / EKA YUNI PERTIWI" },
+            { bank: "MAYBANK", norek: "8755979133", nama: "WD MAYBANK G1 / Siti Nurlaila" },
+            { bank: "BCA", norek: "6560357913", nama: "WD BCA G1 / INDRA SEPTIAN" },
+            { bank: "BCA", norek: "5850396029", nama: "WD BCA G2 / Lilis Ernawati" },
+            { bank: "BCA", norek: "1980356741", nama: "WD BCA G3 / FARIS IMAM BUCHORI" },
+            { bank: "BCA", norek: "5798022754", nama: "WD BCA G4 / Amelia Wati Wibisono" },
+            { bank: "BCA", norek: "5798039592", nama: "WD BCA G5 / Bobi Saputra" },
+            { bank: "BCA", norek: "5830388291", nama: "WD BCA G6 / TJONG ARIH / M RAMDANI" },
+            { bank: "BCA", norek: "1082902672", nama: "WD BCA G7 / SHERLY" },
+            { bank: "BCA", norek: "4080258629", nama: "WD BCA G9 / Ratmi B Warsad" },
+            { bank: "BCA", norek: "1370574959", nama: "WD BCA G10 / Ali Nurdin" },
+            { bank: "BCA", norek: "0031420040", nama: "WD BCA G11 / REZA ADRIANNI" },
+            { bank: "BCA", norek: "2770738434", nama: "WD BCA G12 / NURSIAH" },
+            { bank: "BRI", norek: "055601011614538", nama: "WD BRI G1 / Priyo Aryatno" },
+            { bank: "BRI", norek: "007101112376500", nama: "WD BRI G2 / Ari Romayanti" },
+            { bank: "CIMB", norek: "763776016100", nama: "WD CIMB G1 / ROSIDA" },
+            { bank: "CIMB", norek: "763724724000", nama: "WD CIMB G2 / IKAL BUDIAWAN" },
+            { bank: "DANAMON", norek: "3674201797", nama: "BANK WD DANAMON G1 / M ADRIL YANSAH" }
+        ].map(n => ({...n, saldo: 0}));
+
+        async function fetchData() {
+            document.getElementById('status').innerText = "Sedang sinkronisasi...";
+            try {
+                const res = await fetch(CSV_URL + '&cache=' + Math.random());
+                const text = await res.text();
+                Papa.parse(text, {
+                    complete: (results) => processData(results.data)
+                });
+            } catch (e) {
+                document.getElementById('status').innerText = "Koneksi Gagal!";
+            }
+        }
+
+        function processData(rows) {
+            let grandTotal = 0;
+            masterData.forEach(acc => {
+                // Cari baris yang mengandung nama atau nomor rekening
+                const findRow = rows.find(r => {
+                    const str = r.join(" ").toUpperCase();
+                    return str.includes(acc.norek) || str.includes(acc.nama.toUpperCase().split('/')[0].trim());
+                });
+
+                if (findRow) {
+                    // Cari angka di baris tersebut yang paling mungkin jadi saldo
+                    let possibleSaldos = findRow.map(cell => {
+                        let clean = cell.toString().replace(/[^0-9]/g, '');
+                        return clean.length > 2 ? parseInt(clean) : 0;
+                    }).filter(num => num > 0 && num !== parseInt(acc.norek));
+                    
+                    acc.saldo = possibleSaldos.length > 0 ? possibleSaldos[possibleSaldos.length - 1] : 0;
+                }
+                grandTotal += acc.saldo;
+            });
+
+            renderTable();
+            document.getElementById('totalAll').innerText = "Rp " + grandTotal.toLocaleString('id-ID');
+            document.getElementById('status').innerText = "Update Terakhir: " + new Date().toLocaleTimeString();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('mainTable');
+            tbody.innerHTML = '';
+            masterData.forEach(acc => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-white/5 transition">
+                        <td class="p-4 text-xs font-bold text-indigo-400">${acc.bank}</td>
+                        <td class="p-4">
+                            <div class="text-sm font-bold">${acc.nama}</div>
+                            <div class="text-[10px] text-slate-500 font-mono">${acc.norek}</div>
+                        </td>
+                        <td class="p-4 text-right font-mono font-bold ${acc.saldo > 0 ? 'text-emerald-400' : 'text-slate-600'}">
+                            ${acc.saldo.toLocaleString('id-ID')}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function filterTable() {
+            const q = document.getElementById('search').value.toUpperCase();
+            const rows = document.querySelectorAll('#mainTable tr');
+            rows.forEach(r => {
+                r.style.display = r.innerText.toUpperCase().includes(q) ? '' : 'none';
+            });
+        }
+
+        fetchData();
+        setInterval(fetchData, 30000); // Otomatis refresh tiap 30 detik
+    </script>
+</body>
+</html>
