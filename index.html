@@ -3,99 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TVTOTO | Monitoring Saldo Live</title>
+    <title>TVTOTO PRO | Dashboard Monitoring Saldo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+        
+        :root { --primary: #6366f1; --dark: #0f172a; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .status-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-        .table-container { height: calc(100vh - 350px); overflow-y: auto; }
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .table-container { height: calc(100vh - 380px); overflow-y: auto; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
+        .status-pulse { animation: pulse-green 2s infinite; }
+        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        
+        /* Filter Button Active */
+        .filter-btn.active { background-color: var(--primary); color: white; border-color: var(--primary); }
     </style>
 </head>
 <body class="text-slate-900">
 
-    <div class="flex min-h-screen">
-        <aside class="w-72 bg-[#0f172a] text-white p-8 hidden lg:flex flex-col sticky top-0 h-screen shadow-2xl">
-            <div class="mb-10 text-center">
-                <h1 class="text-3xl font-extrabold tracking-tighter italic text-indigo-400">TVTOTO<span class="text-white">PRO</span></h1>
-                <p class="text-[10px] uppercase tracking-[0.3em] font-bold text-slate-500 mt-2">Monitoring System v2.5</p>
-            </div>
-
-            <div class="space-y-4">
-                <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase">Server Connection</span>
-                        <div id="statusDot" class="h-2 w-2 rounded-full bg-yellow-500 status-pulse"></div>
+    <div class="flex h-screen overflow-hidden">
+        <aside class="w-72 bg-[#0f172a] text-white p-8 hidden lg:flex flex-col shadow-2xl">
+            <div class="mb-10">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-layer-group text-white"></i>
                     </div>
-                    <p id="statusText" class="text-sm font-semibold text-yellow-500 italic">Initializing...</p>
+                    <h1 class="text-2xl font-extrabold tracking-tighter italic">TVTOTO<span class="text-indigo-400">PRO</span></h1>
                 </div>
-
-                <div class="bg-indigo-600/10 p-4 rounded-2xl border border-indigo-500/30">
-                    <p class="text-[10px] font-bold text-indigo-400 uppercase mb-1">Last Update</p>
-                    <p id="syncTime" class="text-xs mono text-indigo-200">--:--:--</p>
-                </div>
+                <p class="text-[9px] uppercase tracking-[0.4em] font-bold text-slate-500 mt-4 leading-relaxed">Financial Monitoring v3.0</p>
             </div>
 
-            <div class="mt-auto pt-6 border-t border-slate-800">
-                <button onclick="ambilDataSaldo()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-95">
-                    <i class="fas fa-sync-alt mr-2"></i> Sinkron Sekarang
+            <nav class="space-y-6 flex-1">
+                <div>
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 block">Connection</label>
+                    <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700">
+                        <div class="flex justify-between items-center mb-1">
+                            <span id="statusText" class="text-xs font-bold text-yellow-500 italic">Syncing...</span>
+                            <div id="statusDot" class="h-2 w-2 rounded-full bg-yellow-500"></div>
+                        </div>
+                        <p id="syncTime" class="text-[10px] mono text-slate-400">--:--:--</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 block">Quick Filter</label>
+                    <div id="filterContainer" class="flex flex-wrap gap-2">
+                        <button onclick="filterByBank('ALL')" class="filter-btn active px-3 py-1.5 rounded-lg border border-slate-700 text-[10px] font-bold transition-all hover:bg-slate-700">ALL</button>
+                        <button onclick="filterByBank('BCA')" class="filter-btn px-3 py-1.5 rounded-lg border border-slate-700 text-[10px] font-bold transition-all hover:bg-slate-700">BCA</button>
+                        <button onclick="filterByBank('MANDIRI')" class="filter-btn px-3 py-1.5 rounded-lg border border-slate-700 text-[10px] font-bold transition-all hover:bg-slate-700">MANDIRI</button>
+                        <button onclick="filterByBank('BRI')" class="filter-btn px-3 py-1.5 rounded-lg border border-slate-700 text-[10px] font-bold transition-all hover:bg-slate-700">BRI</button>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="pt-6 border-t border-slate-800">
+                <button onclick="ambilDataSaldo()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fas fa-sync-alt"></i> SINKRONISASI
                 </button>
             </div>
         </aside>
 
-        <main class="flex-1 p-6 lg:p-10">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 flex items-center gap-5">
-                    <div class="bg-indigo-100 text-indigo-600 w-14 h-14 rounded-2xl flex items-center justify-center text-2xl">
-                        <i class="fas fa-wallet"></i>
+        <main class="flex-1 overflow-y-auto p-4 lg:p-10">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div class="glass-card p-6 rounded-[2rem] shadow-sm flex items-center gap-5">
+                    <div class="bg-indigo-100 text-indigo-600 w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-inner">
+                        <i class="fas fa-coins"></i>
                     </div>
                     <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Saldo Live</p>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Total Saldo Terbaca</p>
                         <h3 id="totalSaldo" class="text-2xl font-extrabold mono tracking-tighter text-indigo-600">Rp 0</h3>
                     </div>
                 </div>
-
-                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 flex items-center gap-5">
-                    <div class="bg-emerald-100 text-emerald-600 w-14 h-14 rounded-2xl flex items-center justify-center text-2xl">
-                        <i class="fas fa-university"></i>
+                
+                <div class="glass-card p-6 rounded-[2rem] shadow-sm flex items-center gap-5">
+                    <div class="bg-emerald-100 text-emerald-600 w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-inner">
+                        <i class="fas fa-user-check"></i>
                     </div>
                     <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Rekening Terdaftar</p>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Rekening Terpantau</p>
                         <h3 id="totalBank" class="text-2xl font-extrabold mono tracking-tighter text-emerald-600">0</h3>
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 flex items-center justify-center">
-                    <button onclick="toggleModal()" class="w-full h-full bg-slate-900 text-white rounded-2xl font-bold hover:bg-indigo-600 transition flex items-center justify-center gap-2">
-                        <i class="fas fa-plus-circle"></i> Tambah Akun
+                <div class="flex items-center">
+                    <button onclick="toggleModal()" class="w-full py-5 bg-slate-900 text-white rounded-[1.5rem] font-bold hover:bg-indigo-600 transition-all flex items-center justify-center gap-3 shadow-xl">
+                        <i class="fas fa-plus-circle"></i> TAMBAH AKUN
                     </button>
                 </div>
             </div>
 
-            <div class="relative mb-6">
-                <i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Cari nama atau rekening..." 
-                class="w-full pl-14 pr-6 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition">
-            </div>
+            <div class="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden">
+                <div class="p-6 border-b border-slate-100 bg-white/50 backdrop-blur-md sticky top-0 z-20 flex flex-wrap gap-4 justify-between items-center">
+                    <div class="relative w-full md:w-96">
+                        <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Cari nama atau nomor rekening..." 
+                        class="w-full pl-12 pr-6 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition font-medium">
+                    </div>
+                    <div id="activeFilterLabel" class="text-[10px] font-black px-4 py-2 bg-slate-100 rounded-full text-slate-500">FILTER: SEMUA DATA</div>
+                </div>
 
-            <div class="bg-white rounded-[2rem] shadow-xl border border-slate-200 overflow-hidden">
                 <div class="table-container custom-scroll">
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-50 sticky top-0 z-10">
-                            <tr>
-                                <th class="p-5 text-[10px] font-black uppercase text-slate-400 border-b">Provider</th>
-                                <th class="p-5 text-[10px] font-black uppercase text-slate-400 border-b">Detail Akun</th>
-                                <th class="p-5 text-[10px] font-black uppercase text-slate-400 border-b text-right">Saldo Terbaca</th>
-                                <th class="p-5 text-[10px] font-black uppercase text-slate-400 border-b text-center">Aksi</th>
+                        <thead class="bg-slate-50/80 sticky top-0 z-10">
+                            <tr class="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                                <th class="p-6 border-b">Provider</th>
+                                <th class="p-6 border-b">Informasi Akun</th>
+                                <th class="p-6 border-b text-right">Saldo Saat Ini</th>
+                                <th class="p-6 border-b text-center">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody" class="divide-y divide-slate-100"></tbody>
+                        <tbody id="tableBody" class="divide-y divide-slate-100">
+                            </tbody>
                     </table>
                 </div>
             </div>
@@ -103,15 +130,18 @@
     </div>
 
     <div id="modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-[2.5rem] p-10 w-full max-w-md shadow-2xl">
-            <h2 class="text-2xl font-extrabold mb-6 flex items-center gap-3"><i class="fas fa-plus-square text-indigo-600"></i> Akun Baru</h2>
+        <div class="bg-white rounded-[2.5rem] p-10 w-full max-w-md shadow-2xl scale-up-animation">
+            <h2 class="text-2xl font-black mb-2 text-slate-800">Akun Baru</h2>
+            <p class="text-xs text-slate-400 mb-8 font-medium">Input nama harus persis dengan Google Sheets</p>
+            
             <div class="space-y-4">
-                <input type="text" id="inBank" placeholder="BANK" class="w-full p-4 bg-slate-50 rounded-xl border border-slate-100 font-bold uppercase text-xs outline-none focus:border-indigo-500">
-                <input type="text" id="inRek" placeholder="NOMOR REKENING" class="w-full p-4 bg-slate-50 rounded-xl border border-slate-100 font-bold mono text-xs outline-none focus:border-indigo-500">
-                <input type="text" id="inNama" placeholder="NAMA SESUAI SPREADSHEET" class="w-full p-4 bg-slate-50 rounded-xl border border-slate-100 font-bold text-xs uppercase outline-none focus:border-indigo-500">
-                <div class="flex gap-3 pt-4">
-                    <button onclick="simpanData()" class="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 transition">SIMPAN</button>
-                    <button onclick="toggleModal()" class="flex-1 bg-slate-100 text-slate-500 py-4 rounded-xl font-bold">BATAL</button>
+                <input type="text" id="inBank" placeholder="BANK (Contoh: BCA, MANDIRI)" class="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 font-bold uppercase text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="text" id="inRek" placeholder="NOMOR REKENING" class="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 font-bold mono text-xs outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="text" id="inNama" placeholder="NAMA LENGKAP" class="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 font-bold text-xs uppercase outline-none focus:ring-2 focus:ring-indigo-500">
+                
+                <div class="flex gap-3 pt-6">
+                    <button onclick="simpanData()" class="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition">SIMPAN</button>
+                    <button onclick="toggleModal()" class="flex-1 bg-slate-100 text-slate-400 py-4 rounded-xl font-bold hover:bg-slate-200 transition">BATAL</button>
                 </div>
             </div>
         </div>
@@ -119,155 +149,38 @@
 
     <script>
         const sheetCSVUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/pub?gid=1655913458&single=true&output=csv';
-        
-        // Asset Audio untuk Notifikasi
         const soundAlert = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        
+        let dataBank = [];
+        let currentFilter = 'ALL';
         let totalSaldoLama = 0;
 
-        let dataBank = [
-            { bank: "OCBC", norek: "621810071939", nama: "Raisah Bt Rali", saldo: 0 },
-            { bank: "OCBC", norek: "624810073756", nama: "Jerry Rand", saldo: 0 },
-            { bank: "SINARMAS", norek: "0059567365", nama: "Raisah Bt Rali", saldo: 0 },
-            { bank: "SINAR MAS", norek: "0018464268", nama: "TUTI SAHRIYATUN", saldo: 0 },
-            { bank: "SINARMAS", norek: "0059632086", nama: "Asha Intan Permatasari", saldo: 0 },
-            { bank: "DANAMON", norek: "3690919737", nama: "Hendra", saldo: 0 },
-            { bank: "DANAMON", norek: "903691375012", nama: "UMAS", saldo: 0 },
-            { bank: "DANAMON", norek: "3692115276", nama: "HANI SITI WAHYUNI", saldo: 0 },
-            { bank: "BCA", norek: "1940533356", nama: "Billy Tanjung Kurniawan", saldo: 0 },
-            { bank: "BCA", norek: "5781176851", nama: "Idris Sardi", saldo: 0 },
-            { bank: "BCA", norek: "0663529428", nama: "Adellia Citra", saldo: 0 },
-            { bank: "BCA", norek: "7120806232", nama: "Rahman Fauzan Oktora", saldo: 0 },
-            { bank: "BNI", norek: "1926659556", nama: "Ujang Suparman", saldo: 0 },
-            { bank: "BNI", norek: "1821381905", nama: "ALVIN NUARI", saldo: 0 },
-            { bank: "BNI", norek: "1984533769", nama: "Irma Yunita", saldo: 0 },
-            { bank: "MANDIRI", norek: "1060020111673", nama: "Fandy Ramadhan", saldo: 0 },
-            { bank: "MANDIRI", norek: "1150010841072", nama: "Muhamad Ramdhan Saputra", saldo: 0 },
-            { bank: "MANDIRI", norek: "1150010841973", nama: "Wahidin", saldo: 0 },
-            { bank: "MANDIRI", norek: "1630011517151", nama: "M. Encep Juliana", saldo: 0 },
-            { bank: "MANDIRI", norek: "1050021291152", nama: "Abdul Akbar", saldo: 0 },
-            { bank: "MANDIRI", norek: "1560025221336", nama: "Dede", saldo: 0 },
-            { bank: "MANDIRI", norek: "1190012025357", nama: "FATHAN FARISAN", saldo: 0 },
-            { bank: "MANDIRI", norek: "1110024376150", nama: "Irwan firmansyah", saldo: 0 },
-            { bank: "MANDIRI", norek: "1110024362895", nama: "Yoniko Samura Narazhaki", saldo: 0 },
-            { bank: "MANDIRI", norek: "1150010412486", nama: "Nurlindawati", saldo: 0 },
-            { bank: "BRI", norek: "224801006440509", nama: "Susanto", saldo: 0 },
-            { bank: "BRI", norek: "370501002173501", nama: "Faizah", saldo: 0 },
-            { bank: "BRI", norek: "384801022008500", nama: "Vito Radiansah", saldo: 0 },
-            { bank: "BCA", norek: "7125821189", nama: "Ahmad rifaldi", saldo: 0 },
-            { bank: "BCA", norek: "842477920", nama: "BENTAR PUTRA PRATAMA", saldo: 0 },
-            { bank: "BRI", norek: "041801022619503", nama: "Ferdi alexander", saldo: 0 },
-            { bank: "BCA", norek: "4931010845", nama: "Heni Parantina", saldo: 0 },
-            { bank: "BCA", norek: "0955074161", nama: "Lia Kusmiati", saldo: 0 },
-            { bank: "BCA", norek: "4931010870", nama: "Sanah", saldo: 0 },
-            { bank: "BCA", norek: "4080275736", nama: "EKA SUSANTI", saldo: 0 },
-            { bank: "DANAMON", norek: "903687401202", nama: "Kezia Victoria Halim", saldo: 0 },
-            { bank: "DANAMON", norek: "3682785617", nama: "Marchellino Alfaro", saldo: 0 },
-            { bank: "BCA", norek: "2770799271", nama: "HANIKA", saldo: 0 },
-            { bank: "BCA", norek: "4770265431", nama: "RACHEL INEKE PUTRI", saldo: 0 },
-            { bank: "BCA", norek: "7275566039", nama: "SITI HEFTIYANAH", saldo: 0 },
-            { bank: "BCA", norek: "3120967893", nama: "Inzaghi", saldo: 0 },
-            { bank: "BCA", norek: "0322713337", nama: "Gusnimar", saldo: 0 },
-            { bank: "BCA", norek: "6313017261", nama: "MUHAMMAD ABIZAL", saldo: 0 },
-            { bank: "BCA", norek: "2320743829", nama: "SURYA DITA RAHMATUL AKBAR", saldo: 0 },
-            { bank: "BCA", norek: "2620246002", nama: "TERRA INGGIT HERMAWAN", saldo: 0 },
-            { bank: "BCA", norek: "5320274798", nama: "ENTIK SUPARMAN", saldo: 0 },
-            { bank: "BCA", norek: "5860564442", nama: "MUHAMAD RIZKY", saldo: 0 },
-            { bank: "BCA", norek: "0031438801", nama: "KHESYA ALEYA PUTRI", saldo: 0 },
-            { bank: "BCA", norek: "3110139623", nama: "M. DANI ABDUL MANAP", saldo: 0 },
-            { bank: "BCA", norek: "0010824427", nama: "ROBBY KUSUMA", saldo: 0 },
-            { bank: "BCA", norek: "0740187309", nama: "RIZKI APRIADI", saldo: 0 },
-            { bank: "BCA", norek: "7680835416", nama: "MARTHEN JEVERSON DJAWE MONE", saldo: 0 },
-            { bank: "BCA", norek: "1790386759", nama: "Suhaeriah", saldo: 0 },
-            { bank: "BCA", norek: "1790387275", nama: "Iwan", saldo: 0 },
-            { bank: "BCA", norek: "2290700895", nama: "AHMAD SYAUKI", saldo: 0 },
-            { bank: "BCA", norek: "4670456922", nama: "RAFLY FADILLAH", saldo: 0 },
-            { bank: "BCA", norek: "2453648117", nama: "WIKA ISMAWATII", saldo: 0 },
-            { bank: "BCA", norek: "0020325941", nama: "GUSTIAN", saldo: 0 },
-            { bank: "BCA", norek: "5781171892", nama: "APRILIANTO", saldo: 0 },
-            { bank: "BCA", norek: "6087026304", nama: "Saeful Anwar", saldo: 0 },
-            { bank: "BCA", norek: "4871057936", nama: "Irham Permana Solehudin", saldo: 0 },
-            { bank: "BCA", norek: "4120398186", nama: "HAMDAN", saldo: 0 },
-            { bank: "BCA", norek: "7655625119", nama: "IRWAN KURNIAWAN", saldo: 0 },
-            { bank: "BCA", norek: "4120398526", nama: "ARVAN AVANDI", saldo: 0 },
-            { bank: "BCA", norek: "5411607802", nama: "Muhaddad", saldo: 0 },
-            { bank: "BCA", norek: "4871055585", nama: "Muhammad Noerchalik", saldo: 0 },
-            { bank: "BCA", norek: "1610170869", nama: "Muhammad Khairul Ummam", saldo: 0 },
-            { bank: "BCA", norek: "7030454558", nama: "SUGENG WIDODO", saldo: 0 },
-            { bank: "BCA", norek: "6920300063", nama: "MISDA", saldo: 0 },
-            { bank: "BCA", norek: "2453647561", nama: "ROHILAH", saldo: 0 },
-            { bank: "BCA", norek: "4810368697", nama: "DAVIEN JOE WIJAYA", saldo: 0 },
-            { bank: "BCA", norek: "5411606288", nama: "NURHADI", saldo: 0 },
-            { bank: "BCA", norek: "5195214333", nama: "EFI REFLINI", saldo: 0 },
-            { bank: "BCA", norek: "8011098258", nama: "RANI SYAFRINA", saldo: 0 },
-            { bank: "BCA", norek: "6920300209", nama: "NURASIAH", saldo: 0 },
-            { bank: "BCA", norek: "5885270244", nama: "DEVIN FERNANDO", saldo: 0 },
-            { bank: "BCA", norek: "2530408348", nama: "AHMAD ALTHOF", saldo: 0 },
-            { bank: "BCA", norek: "0690669722", nama: "Mafiyah", saldo: 0 },
-            { bank: "BCA", norek: "0562522768", nama: "ALVIN SULHAN HADI", saldo: 0 },
-            { bank: "BCA", norek: "6085042339", nama: "AKHMAD GHIFARI AKBAR", saldo: 0 },
-            { bank: "BCA", norek: "8780524589", nama: "Illham Alamsyah", saldo: 0 },
-            { bank: "BCA", norek: "7680844512", nama: "YULIANA", saldo: 0 },
-            { bank: "BCA", norek: "7680843931", nama: "EKARIANSYAH HIDAYAT", saldo: 0 },
-            { bank: "BCA", norek: "0010828023", nama: "LESMANA", saldo: 0 },
-            { bank: "BCA", norek: "5411663737", nama: "LIF IFADILAH", saldo: 0 },
-            { bank: "BCA", norek: "7131809968", nama: "ROSITA", saldo: 0 },
-            { bank: "BCA", norek: "7560501441", nama: "WARNIAH", saldo: 0 },
-            { bank: "BCA", norek: "3420783166", nama: "RAMA SETIADI", saldo: 0 },
-            { bank: "BCA", norek: "4160830366", nama: "FITRI NURJANAH", saldo: 0 },
-            { bank: "BCA", norek: "2453716031", nama: "RIFAL HERIANA", saldo: 0 },
-            { bank: "BCA", norek: "1790403432", nama: "MUHAMAT ARDIANSYAH", saldo: 0 },
-            { bank: "BCA", norek: "1751292550", nama: "Mega Alas Tina Wati", saldo: 0 },
-            { bank: "BCA", norek: "1751291723", nama: "RIATNO", saldo: 0 },
-            { bank: "BCA", norek: "8288140182", nama: "MUHAMMAD AWALLUDIN AKMAL", saldo: 0 },
-            { bank: "BCA", norek: "7006734170", nama: "SRI NING MULIANI", saldo: 0 },
-            { bank: "MANDIRI", norek: "1190011421540", nama: "DAVINA RAMADANI", saldo: 0 },
-            { bank: "MANDIRI", norek: "1150010874842", nama: "Rifal Afrian", saldo: 0 },
-            { bank: "MANDIRI", norek: "1150011255686", nama: "SURYANTO", saldo: 0 },
-            { bank: "MANDIRI", norek: "1630014077211", nama: "TBMULYANA", saldo: 0 },
-            { bank: "MANDIRI", norek: "1180014679384", nama: "Nur hayati", saldo: 0 },
-            { bank: "BRI", norek: "121001003000530", nama: "INDRA PUTRA JAYA", saldo: 0 },
-            { bank: "BRI", norek: "036801079333503", nama: "I Wayan Wardana", saldo: 0 },
-            { bank: "BRI", norek: "086301004767507", nama: "CHINTYA CIKAL NURSAID", saldo: 0 },
-            { bank: "BRI", norek: "385401005401504", nama: "Febri Nurfitri Ramadhani", saldo: 0 },
-            { bank: "BRI", norek: "529601007842508", nama: "NATALDO K.P, GULO", saldo: 0 },
-            { bank: "BRI", norek: "040401020446531", nama: "MANGARA JOYAKHIN SIMANJUNTAK", saldo: 0 },
-            { bank: "BRI", norek: "133301010153508", nama: "RIO EL FAHMIE LIZAM", saldo: 0 },
-            { bank: "BRI", norek: "040401067487506", nama: "CUT MEUTHIA RAHMADHINA", saldo: 0 },
-            { bank: "BRI", norek: "529601007841502", nama: "GABRIEL IMMANUEL SIBAGARIAN", saldo: 0 },
-            { bank: "BRI", norek: "033601159160506", nama: "ERDIO RAVA DZHWAN", saldo: 0 },
-            { bank: "BRI", norek: "529601007850501", nama: "FELLY YOSAFAT SIHOMBING", saldo: 0 },
-            { bank: "BRI", norek: "529601007838509", nama: "MICHAEL JUNIOR HUTAGAOL", saldo: 0 },
-            { bank: "BRI", norek: "040401068331504", nama: "ERWIN HUTABARAT", saldo: 0 },
-            { bank: "BNI", norek: "1924606390", nama: "Dede Hardiansyah", saldo: 0 },
-            { bank: "BNI", norek: "1924233315", nama: "Ujang", saldo: 0 },
-            { bank: "BNI", norek: "1924651785", nama: "Eka Sofiana", saldo: 0 },
-            { bank: "BNI", norek: "1951788626", nama: "RISMAWATI", saldo: 0 },
-            { bank: "BNI", norek: "1958533545", nama: "BAGAS ARIA TRISNA", saldo: 0 },
-            { bank: "BNI", norek: "1958554963", nama: "VITO PRAMANA SAPUTRA", saldo: 0 },
-            { bank: "BNI", norek: "1958554384", nama: "SURYA WIJAYA", saldo: 0 },
-            { bank: "BNI", norek: "1992948425", nama: "SUNARYA", saldo: 0 },
-            { bank: "BNI", norek: "1992953999", nama: "KEVIN MAULANA LUBIS", saldo: 0 },
-            { bank: "BNI", norek: "1992980672", nama: "MEMES FIRA DWIYANA", saldo: 0 },
-            { bank: "CIMB", norek: "708197093600", nama: "CECAR SARAMBU KUSUMO SUNDUN", saldo: 0 },
-            { bank: "CIMB", norek: "708256271300", nama: "DWI GILANG RAMADHAN", saldo: 0 },
-            { bank: "CIMB", norek: "708355880900", nama: "Erni Kisdiana", saldo: 0 },
-            { bank: "CIMB", norek: "708465826600", nama: "FADILLA CHAIRUNNISA", saldo: 0 },
-            { bank: "DANAMON", norek: "3693534160", nama: "QOUBUS AKBAR ZAHRAN", saldo: 0 },
-            { bank: "DANAMON", norek: "903693140786", nama: "EKA YUNI PERTIWI", saldo: 0 },
-            { bank: "MAYBANK", norek: "8755979133", nama: "Siti Nurlaila", saldo: 0 }
-        ];
+        // Inisialisasi Data dari Storage atau Default
+        function initData() {
+            const saved = localStorage.getItem('tvtoto_monitor_v3');
+            if (saved) {
+                dataBank = JSON.parse(saved);
+            } else {
+                dataBank = [
+                    { bank: "OCBC", norek: "621810071939", nama: "RAISAH BT RALI", saldo: 0 },
+                    { bank: "OCBC", norek: "624810073756", nama: "JERRY RAND", saldo: 0 },
+                    { bank: "SINARMAS", norek: "0059567365", nama: "RAISAH BT RALI", saldo: 0 },
+                    { bank: "BCA", norek: "1940533356", nama: "BILLY TANJUNG KURNIAWAN", saldo: 0 }
+                ];
+                saveToStorage();
+            }
+            renderTable();
+            ambilDataSaldo();
+        }
 
         async function ambilDataSaldo() {
             updateStatus("loading");
             try {
-                const response = await fetch(`${sheetCSVUrl}&t=${Date.now()}`);
-                const csvData = await response.text();
-                
-                Papa.parse(csvData, {
-                    header: false,
-                    skipEmptyLines: true,
-                    complete: function(results) {
-                        prosesData(results.data);
+                const res = await fetch(`${sheetCSVUrl}&t=${Date.now()}`);
+                const csv = await res.text();
+                Papa.parse(csv, {
+                    complete: (results) => {
+                        prosesLogikaSaldo(results.data);
                         updateStatus("online");
                     }
                 });
@@ -276,131 +189,146 @@
             }
         }
 
-        function prosesData(rows) {
-            let totalSaldoBaru = 0;
-
-            dataBank.forEach(bank => {
-                bank.saldo = 0; 
-                const baris = rows.find(r => 
-                    r.some(cell => cell.toString().toLowerCase().trim() === bank.nama.toLowerCase().trim())
+        function prosesLogikaSaldo(rows) {
+            let totalBaru = 0;
+            dataBank.forEach(item => {
+                item.saldo = 0;
+                // Cari baris yang mengandung nama (case insensitive)
+                const row = rows.find(r => 
+                    r.some(cell => cell.toString().toUpperCase().trim() === item.nama.toUpperCase().trim())
                 );
 
-                if (baris) {
-                    let saldoFix = 0;
-                    for (let i = baris.length - 1; i >= 0; i--) {
-                        let rawValue = baris[i].toString().replace(/[^0-9]/g, '');
-                        if (rawValue !== "" && rawValue.length < 12) { 
-                            saldoFix = parseInt(rawValue);
-                            break; 
+                if (row) {
+                    let numbers = [];
+                    row.forEach(cell => {
+                        let clean = cell.toString().replace(/[^\d]/g, '');
+                        // Angka yang dianggap saldo adalah 4-12 digit & bukan nomor rekening
+                        if (clean.length >= 4 && clean.length <= 12 && clean !== item.norek) {
+                            numbers.push(parseInt(clean));
                         }
+                    });
+                    if (numbers.length > 0) {
+                        item.saldo = Math.max(...numbers);
+                        totalBaru += item.saldo;
                     }
-                    bank.saldo = saldoFix;
-                    totalSaldoBaru += saldoFix;
                 }
             });
 
-            // Logika Suara: Jika total saldo naik, bunyikan alarm
-            if (totalSaldoBaru > totalSaldoLama && totalSaldoLama !== 0) {
-                soundAlert.play().catch(e => console.log("Interaksi user diperlukan untuk suara"));
+            if (totalBaru > totalSaldoLama && totalSaldoLama !== 0) {
+                soundAlert.play().catch(() => {});
             }
-            totalSaldoLama = totalSaldoBaru;
-
+            totalSaldoLama = totalBaru;
             renderTable();
         }
 
-        function renderTable(list = dataBank) {
+        function renderTable() {
             const body = document.getElementById('tableBody');
             body.innerHTML = '';
-            let total = 0;
+            
+            let filtered = dataBank;
+            if (currentFilter !== 'ALL') {
+                filtered = dataBank.filter(x => x.bank.toUpperCase() === currentFilter);
+            }
 
-            list.forEach((item, i) => {
-                total += item.saldo;
-                const active = item.saldo > 0;
-
+            let totalDisplay = 0;
+            filtered.forEach((item, index) => {
+                totalDisplay += item.saldo;
                 body.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition group">
-                        <td class="p-5">
-                            <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-[10px] font-extrabold border border-slate-200 uppercase tracking-widest">${item.bank}</span>
+                    <tr class="hover:bg-slate-50 transition-colors group">
+                        <td class="p-6">
+                            <span class="px-3 py-1 bg-white border border-slate-200 rounded-lg text-[9px] font-black text-slate-600 uppercase tracking-tighter shadow-sm group-hover:border-indigo-200 group-hover:bg-indigo-50 transition-all">${item.bank}</span>
                         </td>
-                        <td class="p-5">
+                        <td class="p-6">
                             <div class="flex flex-col">
-                                <span class="text-slate-400 text-[11px] mono font-medium">${item.norek}</span>
                                 <span class="text-sm font-bold text-slate-800 uppercase tracking-tight">${item.nama}</span>
+                                <span class="text-[11px] mono text-slate-400 font-medium">${item.norek}</span>
                             </div>
                         </td>
-                        <td class="p-5 text-right">
-                            <span class="text-base font-black mono ${active ? 'text-emerald-600' : 'text-slate-300'}">
+                        <td class="p-6 text-right">
+                            <span class="text-base font-bold mono ${item.saldo > 0 ? 'text-emerald-600' : 'text-slate-300'}">
                                 ${formatIDR(item.saldo)}
                             </span>
                         </td>
-                        <td class="p-5 text-center">
-                            <button onclick="hapus(${i})" class="text-slate-300 hover:text-red-500 transition active:scale-90 p-2">
-                                <i class="fas fa-trash-alt"></i>
+                        <td class="p-6 text-center">
+                            <button onclick="hapusAkun(${index})" class="w-8 h-8 rounded-lg text-slate-300 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90 flex items-center justify-center mx-auto">
+                                <i class="fas fa-trash-alt text-xs"></i>
                             </button>
                         </td>
                     </tr>
                 `;
             });
 
-            document.getElementById('totalSaldo').innerText = formatIDR(total);
-            document.getElementById('totalBank').innerText = list.length;
+            document.getElementById('totalSaldo').innerText = formatIDR(totalDisplay);
+            document.getElementById('totalBank').innerText = filtered.length;
         }
 
+        function filterByBank(bank) {
+            currentFilter = bank;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText === bank);
+            });
+            document.getElementById('activeFilterLabel').innerText = `FILTER: ${bank === 'ALL' ? 'SEMUA DATA' : bank}`;
+            renderTable();
+        }
+
+        function searchTable() {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#tableBody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        }
+
+        function simpanData() {
+            const b = document.getElementById('inBank').value.toUpperCase();
+            const r = document.getElementById('inRek').value;
+            const n = document.getElementById('inNama').value.toUpperCase();
+            
+            if(b && r && n) {
+                dataBank.unshift({ bank: b, norek: r, nama: n, saldo: 0 });
+                saveToStorage();
+                renderTable();
+                toggleModal();
+                ambilDataSaldo();
+                // Clear inputs
+                document.getElementById('inBank').value = '';
+                document.getElementById('inRek').value = '';
+                document.getElementById('inNama').value = '';
+            }
+        }
+
+        function hapusAkun(i) {
+            if(confirm('Hapus akun ini dari monitor?')) {
+                dataBank.splice(i, 1);
+                saveToStorage();
+                renderTable();
+            }
+        }
+
+        function saveToStorage() { localStorage.setItem('tvtoto_monitor_v3', JSON.stringify(dataBank)); }
+        function toggleModal() { document.getElementById('modal').classList.toggle('hidden'); }
         function formatIDR(v) { return "Rp " + new Intl.NumberFormat('id-ID').format(v); }
 
         function updateStatus(s) {
             const dot = document.getElementById('statusDot');
             const txt = document.getElementById('statusText');
             const time = document.getElementById('syncTime');
-            
             if(s === "online") {
-                dot.className = "h-2 w-2 rounded-full bg-emerald-500";
-                txt.innerText = "Sistem Online"; txt.className = "text-sm font-bold text-emerald-500";
+                dot.className = "h-2 w-2 rounded-full bg-emerald-500 status-pulse";
+                txt.innerText = "Sistem Online"; txt.className = "text-xs font-bold text-emerald-500 italic";
                 time.innerText = new Date().toLocaleTimeString('id-ID');
             } else if(s === "loading") {
-                dot.className = "h-2 w-2 rounded-full bg-yellow-500 status-pulse";
-                txt.innerText = "Sinkronisasi..."; txt.className = "text-sm font-bold text-yellow-500";
+                dot.className = "h-2 w-2 rounded-full bg-yellow-500 animate-pulse";
+                txt.innerText = "Sinkronisasi..."; txt.className = "text-xs font-bold text-yellow-500 italic";
             } else {
                 dot.className = "h-2 w-2 rounded-full bg-red-500";
-                txt.innerText = "Koneksi Terputus"; txt.className = "text-sm font-bold text-red-500";
+                txt.innerText = "Koneksi Gagal"; txt.className = "text-xs font-bold text-red-500 italic";
             }
         }
 
-        function searchTable() {
-            const val = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = dataBank.filter(x => 
-                x.nama.toLowerCase().includes(val) || 
-                x.norek.includes(val) || 
-                x.bank.toLowerCase().includes(val)
-            );
-            renderTable(filtered);
-        }
-
-        function toggleModal() { document.getElementById('modal').classList.toggle('hidden'); }
-
-        function simpanData() {
-            const b = document.getElementById('inBank').value;
-            const r = document.getElementById('inRek').value;
-            const n = document.getElementById('inNama').value;
-            if(b && r && n) {
-                dataBank.unshift({ bank: b.toUpperCase(), norek: r, nama: n, saldo: 0 });
-                renderTable(); toggleModal();
-                ambilDataSaldo();
-                document.getElementById('inBank').value = '';
-                document.getElementById('inRek').value = '';
-                document.getElementById('inNama').value = '';
-            } else { alert("Lengkapi semua data!"); }
-        }
-
-        function hapus(i) {
-            if(confirm('Hapus rekening ini dari monitoring?')) {
-                dataBank.splice(i, 1);
-                renderTable();
-            }
-        }
-
-        // Auto Refresh tiap 60 detik
-        ambilDataSaldo();
+        // Jalankan
+        initData();
         setInterval(ambilDataSaldo, 60000);
     </script>
 </body>
