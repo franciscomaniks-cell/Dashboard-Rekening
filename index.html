@@ -394,34 +394,8 @@
         }
 
         // Init & Auto Refresh 60 detik
-        async function ambilDataSaldo() {
-  // Update status di tampilan (Pastikan fungsi updateStatus ada di HTML Anda)
-  if (typeof updateStatus === "function") updateStatus("loading");
-
-  google.script.run.withSuccessHandler(function(rows) {
-    dataBank.forEach(bank => {
-      // 1. Cari baris yang mengandung Nama Akun (Contoh: JERRY RAND)
-      const barisMatch = rows.find(r => 
-        r.join(" ").toLowerCase().includes(bank.nama.toLowerCase())
-      );
-
-      if (barisMatch) {
-        // 2. Ambil angka paling kanan (Saldo biasanya di akhir baris)
-        // Kita filter angka yang bukan nomor rekening (biasanya saldo < 12 digit)
-        let saldoDitemukan = 0;
-        for (let i = barisMatch.length - 1; i >= 0; i--) {
-          let cellRaw = barisMatch[i].toString().replace(/\D/g, ''); 
-          if (cellRaw.length > 0 && cellRaw.length < 12) {
-            saldoDitemukan = parseInt(cellRaw);
-            break; 
-          }
-        }
-        bank.saldo = saldoDitemukan;
-      }
-    });
-
-    renderTable(); // Menampilkan data ke tabel
-    if (typeof updateStatus === "function") updateStatus("online");
-  }).getSheetData();
-}
-
+        ambilDataSaldo();
+        setInterval(ambilDataSaldo, 60000);
+    </script>
+</body>
+</html>
