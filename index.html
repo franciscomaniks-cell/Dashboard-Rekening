@@ -62,7 +62,7 @@
 </div>
 
 <script>
-// DATA MASTER AKURAT (124 REKENING)
+// DAFTAR REKENING TETAP SAMA
 const masterData = [
     { bank: "OCBC", norek: "621810071939", nama: "Raisah Bt Rali", saldo: 0 },
     { bank: "OCBC", norek: "624810073756", nama: "Jerry Rand", saldo: 0 },
@@ -216,39 +216,54 @@ const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADd
 
 async function syncData() {
     const statusEl = document.getElementById('status');
-    statusEl.innerText = "SINKRONISASI SEDANG BERJALAN...";
+    statusEl.innerText = "SEDANG MENGAMBIL DATA SALDO...";
     try {
         const response = await fetch(CSV_URL + '&timestamp=' + new Date().getTime());
         const text = await response.text();
+        
         Papa.parse(text, { 
             skipEmptyLines: true,
-            complete: (results) => processMatrix(results.data) 
+            complete: (results) => processData(results.data) 
         });
     } catch (e) {
-        statusEl.innerText = "KONEKSI GOOGLE SHEETS ERROR!";
+        statusEl.innerText = "KONEKSI BERMASALAH!";
     }
 }
 
-function processMatrix(rows) {
+function processData(rows) {
     let grandTotal = 0;
     
     masterData.forEach(acc => {
         const prevSaldo = acc.saldo;
         
-        // Cari baris yang mengandung Nomor Rekening (Metode String Matching)
-        const rowData = rows.find(r => r.join("").replace(/\s/g,'').includes(acc.norek));
+        // 1. Cari baris yang mengandung NOREK atau NAMA
+        const targetRow = rows.find(r => {
+            let gabungBaris = r.join(" ").toUpperCase();
+            return gabungBaris.includes(acc.norek) || gabungBaris.includes(acc.nama.toUpperCase());
+        });
 
-        if (rowData) {
-            let candidates = [];
-            rowData.forEach(cell => {
-                let numeric = cell.toString().replace(/[^0-9]/g, '');
-                // Saldo biasanya minimal 1000 dan tidak sama dengan nomor rekening
-                if (numeric.length >= 4 && numeric !== acc.norek) {
-                    candidates.push(parseInt(numeric));
+        if (targetRow) {
+            let saldosInRow = [];
+            targetRow.forEach(cell => {
+                // LOGIKA SAKTI: Hapus semua kecuali angka
+                // Ini akan mengubah "(2,253,457)" menjadi "2253457"
+                let cleanValue = cell.toString().replace(/[^0-9]/g, '');
+                
+                if (cleanValue.length >= 4) {
+                    let num = parseInt(cleanValue);
+                    // Pastikan angka ini bukan Nomor Rekening atau Tahun
+                    if (num !== parseInt(acc.norek) && num > 2026) {
+                        saldosInRow.push(num);
+                    }
                 }
             });
-            // Logika: Saldo biasanya berada di paling kanan/akhir baris
-            acc.saldo = candidates.length > 0 ? candidates[candidates.length - 1] : 0;
+            
+            // Ambil angka paling besar atau paling kanan (biasanya saldo)
+            if (saldosInRow.length > 0) {
+                acc.saldo = Math.max(...saldosInRow);
+            } else {
+                acc.saldo = 0;
+            }
         }
 
         if (prevSaldo !== acc.saldo) acc.updated = true;
@@ -257,7 +272,7 @@ function processMatrix(rows) {
 
     renderUI();
     document.getElementById('totalAll').innerText = "Rp " + grandTotal.toLocaleString('id-ID');
-    document.getElementById('status').innerText = "LIVE DATA OK: " + new Date().toLocaleTimeString();
+    document.getElementById('status').innerText = "MONITOR AKTIF: " + new Date().toLocaleTimeString();
 }
 
 function renderUI() {
@@ -266,7 +281,7 @@ function renderUI() {
     
     masterData.forEach(acc => {
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-800/40 transition duration-300 group cursor-default';
+        tr.className = 'hover:bg-slate-800/40 transition duration-300';
         if(acc.updated) {
             tr.classList.add('row-update');
             acc.updated = false;
@@ -274,23 +289,22 @@ function renderUI() {
         
         tr.innerHTML = `
             <td class="p-5">
-                <span class="px-3 py-1 bg-slate-800 text-indigo-400 text-[9px] font-black rounded-lg border border-slate-700 uppercase tracking-widest shadow-sm">
+                <span class="px-3 py-1 bg-slate-800 text-indigo-400 text-[9px] font-black rounded-lg border border-slate-700 uppercase">
                     ${acc.bank}
                 </span>
             </td>
             <td class="p-5">
-                <div class="text-xs font-black text-slate-200 group-hover:text-indigo-300 transition-colors uppercase">${acc.nama}</div>
-                <div class="text-[10px] text-slate-500 font-mono mt-1 tracking-tighter">${acc.norek}</div>
+                <div class="text-xs font-black text-slate-200 uppercase">${acc.nama}</div>
+                <div class="text-[10px] text-slate-500 font-mono mt-1">${acc.norek}</div>
             </td>
-            <td class="p-5 text-right font-mono font-bold ${acc.saldo > 0 ? 'text-emerald-400' : 'text-slate-700'}">
-                <span class="text-[10px] mr-1 opacity-40">IDR</span>${acc.saldo.toLocaleString('id-ID')}
+            <td class="p-5 text-right font-mono font-bold ${acc.saldo > 0 ? 'text-emerald-400' : 'text-slate-800'}">
+                ${acc.saldo > 0 ? acc.saldo.toLocaleString('id-ID') : '0'}
             </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-// Fitur Filter Cepat
 document.getElementById('search').addEventListener('input', (e) => {
     const q = e.target.value.toUpperCase();
     document.querySelectorAll('#mainTable tr').forEach(r => {
@@ -300,9 +314,6 @@ document.getElementById('search').addEventListener('input', (e) => {
 
 document.getElementById('refreshBtn').addEventListener('click', syncData);
 
-// Jalankan Otomatis
 syncData();
-setInterval(syncData, 20000); // Sinkronisasi tiap 20 detik
+setInterval(syncData, 15000); // Cek tiap 15 detik
 </script>
-</body>
-</html>
