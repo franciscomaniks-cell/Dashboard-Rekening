@@ -3,167 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Saldo TVTOTO - Full Data</title>
+    <title>TVTOTO PRO - Real-Time Monitor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
+        .card-active { border-left: 4px solid #4f46e5; transition: all 0.5s ease; }
+        .card-zero { opacity: 0.5; filter: grayscale(1); }
+        .pulse-green { animation: pulse-green 2s infinite; border: 2px solid #22c55e !important; }
+        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+        .custom-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
     </style>
 </head>
-<body class="bg-slate-50">
+<body class="p-4 md:p-8">
 
-    <div class="max-w-7xl mx-auto p-4 md:p-10">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200">
+    <div id="notificationContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2"></div>
+
+    <div class="max-w-7xl mx-auto">
+        <div class="bg-white rounded-3xl p-6 md:p-10 mb-8 shadow-xl border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
             <div>
-                <h1 class="text-3xl font-[900] text-slate-800 tracking-tighter italic">TVTOTO <span class="text-indigo-600">LIVE MONITOR</span></h1>
-                <p class="text-slate-400 font-bold text-xs mt-1 uppercase tracking-widest flex items-center">
-                    <span id="pulse" class="h-2 w-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
-                    Status: <span id="statusText" class="ml-1 text-slate-600">Sinkronisasi Otomatis</span>
-                </p>
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="bg-indigo-600 text-white p-2 rounded-xl shadow-lg shadow-indigo-200">
+                        <i class="fas fa-bolt text-xl"></i>
+                    </span>
+                    <h1 class="text-3xl font-extrabold text-slate-800 italic tracking-tighter">TVTOTO <span class="text-indigo-600">LIVE</span></h1>
+                </div>
+                <div id="statusUpdate" class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 flex items-center">
+                    <span class="w-2 h-2 bg-amber-500 rounded-full mr-2 animate-ping"></span> Mengambil Data...
+                </div>
             </div>
-            <div class="flex flex-col items-end">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Saldo Terdeteksi</p>
-                <h2 id="grandTotal" class="text-4xl font-[900] text-slate-900 tabular-nums">Rp 0</h2>
+            
+            <div class="bg-slate-900 px-8 py-5 rounded-3xl text-center md:text-right shadow-2xl">
+                <p class="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Total Saldo Seluruh Bank</p>
+                <h2 id="grandTotal" class="text-4xl font-[900] text-white tabular-nums">Rp 0</h2>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div class="md:col-span-2 relative">
+        <div class="flex flex-col md:flex-row gap-4 mb-8">
+            <div class="relative flex-grow">
                 <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="searchInput" onkeyup="filterData()" placeholder="Cari Nama Bank, Pemilik, atau Grup..." 
-                class="w-full pl-14 pr-6 py-4 rounded-2xl bg-white border border-slate-200 shadow-sm focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-bold text-slate-600">
+                <input type="text" id="searchInput" onkeyup="filterCards()" placeholder="Cari Nama atau No Rekening..." 
+                class="w-full pl-14 pr-6 py-5 rounded-2xl border-none shadow-sm focus:ring-4 focus:ring-indigo-100 outline-none font-bold text-slate-600 transition-all">
             </div>
-            <div class="bg-white px-6 py-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-                <span class="text-xs font-black text-slate-400 uppercase">Jumlah Akun</span>
-                <span id="accCount" class="text-2xl font-black text-indigo-600">0</span>
+            <div class="bg-white px-6 py-4 rounded-2xl shadow-sm flex items-center gap-4 border border-slate-200">
+                <button onclick="enableAudio()" id="audioBtn" class="bg-slate-100 p-2 rounded-lg text-slate-500 hover:bg-indigo-100 hover:text-indigo-600 transition">
+                    <i class="fas fa-volume-up"></i>
+                </button>
+                <select id="filterType" onchange="filterCards()" class="bg-transparent font-bold text-indigo-600 outline-none cursor-pointer text-sm">
+                    <option value="all">Semua Rekening</option>
+                    <option value="active">Saldo Aktif (>0)</option>
+                    <option value="zero">Saldo Rp 0</option>
+                </select>
             </div>
         </div>
 
-        <div class="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
-            <div class="overflow-x-auto custom-scroll">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50/50 border-b border-slate-100">
-                            <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Informasi Rekening (Baris 2)</th>
-                            <th class="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Saldo (Baris 11)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="divide-y divide-slate-50">
-                        </tbody>
-                </table>
-            </div>
+        <div id="cardContainer" class="custom-grid"></div>
+
+        <div id="noData" class="hidden text-center py-20">
+            <i class="fas fa-search text-4xl text-slate-200 mb-4"></i>
+            <p class="text-slate-400 font-bold uppercase tracking-widest">Data tidak ditemukan</p>
         </div>
-        <p class="text-center text-slate-400 text-[10px] mt-8 font-bold uppercase tracking-widest">Data diperbarui setiap 60 detik langsung dari Google Sheets</p>
     </div>
 
     <script>
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/pub?gid=1655913458&single=true&output=csv';
+        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/pub?gid=1655913458&single=true&output=csv';
         
-        let masterData = [];
+        let oldData = [];
+        let audioEnabled = false;
 
-        async function loadSheetData() {
+        function enableAudio() {
+            audioEnabled = true;
+            document.getElementById('audioBtn').classList.replace('bg-slate-100', 'bg-emerald-500');
+            document.getElementById('audioBtn').classList.replace('text-slate-500', 'text-white');
+            alert("Notifikasi Suara Aktif!");
+        }
+
+        async function init() {
             try {
-                const response = await fetch(csvUrl);
-                const text = await response.text();
-                
-                Papa.parse(text, {
+                const response = await fetch(sheetUrl);
+                const csv = await response.text();
+                Papa.parse(csv, {
                     header: false,
                     complete: function(results) {
-                        parseHorizontal(results.data);
+                        smartProcess(results.data);
                     }
                 });
-            } catch (error) {
-                document.getElementById('statusText').innerText = "Koneksi Error!";
-                document.getElementById('pulse').className = "h-2 w-2 bg-red-500 rounded-full mr-2";
+            } catch (e) {
+                document.getElementById('statusUpdate').innerHTML = '<span class="text-red-500 font-black tracking-widest">KONEKSI TERPUTUS</span>';
             }
         }
 
-        function parseHorizontal(rows) {
-            const namaRow = rows[1];   // Baris 2
-            const saldoRow = rows[10]; // Baris 11
-            let temp = [];
+        function smartProcess(rows) {
+            let currentData = [];
+            let total = 0;
 
-            if (!namaRow || !saldoRow) return;
+            // 1. Scan WD Section
+            const wdNames = rows[1] || [];
+            const wdValues = rows[10] || [];
+            wdNames.forEach((name, i) => {
+                if (name && name.length > 5 && name.includes('/')) {
+                    let saldo = parseInt(String(wdValues[i]).replace(/[^0-9]/g, '')) || 0;
+                    currentData.push({ name: name.trim(), saldo, group: 'WD BERSIH' });
+                    total += saldo;
+                }
+            });
 
-            // Loop semua kolom dari A sampai selesai
-            for (let i = 0; i < namaRow.length; i++) {
-                let nama = namaRow[i] ? namaRow[i].trim() : "";
-                let saldoRaw = saldoRow[i] ? saldoRow[i].trim() : "0";
-
-                // Validasi: Hanya ambil jika ada nama di baris 2
-                if (nama !== "" && nama.length > 3) {
-                    let cleanSaldo = parseInt(saldoRaw.replace(/[^0-9]/g, '')) || 0;
-                    
-                    temp.push({
-                        identity: nama,
-                        bank: detectBank(nama),
-                        saldo: cleanSaldo
+            // 2. Scan DEPO Section
+            rows.forEach((row, rowIndex) => {
+                if (rowIndex > 15) {
+                    row.forEach((cell, colIndex) => {
+                        if (cell && cell.includes('/') && cell.length > 5) {
+                            let nextRow = rows[rowIndex + 1];
+                            if (nextRow && nextRow[colIndex]) {
+                                let saldo = parseInt(String(nextRow[colIndex]).replace(/[^0-9]/g, '')) || 0;
+                                if (!currentData.find(x => x.name === cell.trim())) {
+                                    currentData.push({ name: cell.trim(), saldo, group: 'DEPO' });
+                                    total += saldo;
+                                }
+                            }
+                        }
                     });
                 }
-            }
-
-            masterData = temp;
-            displayData(masterData);
-        }
-
-        function detectBank(text) {
-            const banks = ["BCA", "BRI", "BNI", "MANDIRI", "OCBC", "DANAMON", "CIMB", "MAYBANK", "SINARMAS"];
-            let found = "BANK";
-            banks.forEach(b => {
-                if (text.toUpperCase().includes(b)) found = b;
             });
-            return found;
+
+            checkChanges(currentData);
+            oldData = JSON.parse(JSON.stringify(currentData)); // Simpan data sekarang untuk pembanding nanti
+            
+            render(currentData);
+            document.getElementById('grandTotal').innerText = "Rp " + new Intl.NumberFormat('id-ID').format(total);
+            document.getElementById('statusUpdate').innerHTML = '<span class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span> DATA TERHUBUNG: ' + new Date().toLocaleTimeString();
         }
 
-        function displayData(data) {
-            const tbody = document.getElementById('tableBody');
-            let total = 0;
-            tbody.innerHTML = '';
+        function checkChanges(newData) {
+            if (oldData.length === 0) return;
 
+            newData.forEach(newItem => {
+                const oldItem = oldData.find(o => o.name === newItem.name);
+                if (oldItem && newItem.saldo > oldItem.saldo) {
+                    const diff = newItem.saldo - oldItem.saldo;
+                    notify(newItem.name, diff);
+                    if (audioEnabled) playAlertSound();
+                }
+            });
+        }
+
+        function notify(name, amount) {
+            const container = document.getElementById('notificationContainer');
+            const toast = document.createElement('div');
+            toast.className = "bg-emerald-600 text-white p-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-bounce";
+            toast.innerHTML = `
+                <i class="fas fa-coins"></i>
+                <div>
+                    <p class="text-[10px] font-bold opacity-80 uppercase">Saldo Masuk!</p>
+                    <p class="text-xs font-black uppercase">${name}</p>
+                    <p class="text-sm font-bold">+ Rp ${new Intl.NumberFormat('id-ID').format(amount)}</p>
+                </div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 8000);
+        }
+
+        function playAlertSound() {
+            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+            audio.play();
+        }
+
+        function render(data) {
+            const container = document.getElementById('cardContainer');
+            container.innerHTML = '';
+            
             data.forEach(item => {
-                total += item.saldo;
-                tbody.innerHTML += `
-                    <tr class="hover:bg-indigo-50/30 transition group">
-                        <td class="p-6">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-400 group-hover:bg-white transition shadow-sm">
-                                    ${item.bank}
-                                </div>
-                                <div>
-                                    <p class="font-bold text-slate-700 text-sm uppercase tracking-tight">${item.identity}</p>
-                                    <span class="text-[10px] bg-slate-200 text-slate-500 px-2 py-0.5 rounded font-black uppercase">Active</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="p-6 text-right font-black text-slate-900 tabular-nums">
-                            ${item.saldo > 0 ? formatIDR(item.saldo) : '<span class="text-slate-300">Rp 0</span>'}
-                        </td>
-                    </tr>
+                const isZero = item.saldo === 0;
+                // Cek apakah baru saja ada penambahan saldo
+                const isIncreased = oldData.length > 0 && 
+                                   (oldData.find(o => o.name === item.name)?.saldo < item.saldo);
+
+                container.innerHTML += `
+                    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 transition-all card-data 
+                        ${isZero ? 'card-zero' : 'card-active'} ${isIncreased ? 'pulse-green' : ''}">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-[9px] font-black bg-slate-100 text-slate-500 px-3 py-1 rounded-full uppercase">${detectBank(item.name)}</span>
+                            <span class="text-[9px] font-black ${item.group === 'DEPO' ? 'text-amber-500' : 'text-indigo-500'} uppercase">${item.group}</span>
+                        </div>
+                        <h3 class="font-bold text-slate-800 text-xs mb-6 uppercase h-8 overflow-hidden line-clamp-2">${item.name}</h3>
+                        <div class="pt-4 border-t border-slate-50 flex justify-between items-end">
+                            <div class="text-[9px] font-black text-slate-300 uppercase italic">Balance</div>
+                            <div class="text-lg font-[900] text-slate-900 tabular-nums">Rp ${new Intl.NumberFormat('id-ID').format(item.saldo)}</div>
+                        </div>
+                    </div>
                 `;
             });
-
-            document.getElementById('grandTotal').innerText = formatIDR(total);
-            document.getElementById('accCount').innerText = data.length;
-            document.getElementById('statusText').innerText = "Terhubung - " + new Date().toLocaleTimeString('id-ID');
         }
 
-        function filterData() {
+        function detectBank(str) {
+            const banks = ["BCA", "BRI", "BNI", "MANDIRI", "OCBC", "DANAMON", "SINARMAS"];
+            for (let b of banks) { if (str.toUpperCase().includes(b)) return b; }
+            return "BANK";
+        }
+
+        function filterCards() {
             const query = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = masterData.filter(d => d.identity.toLowerCase().includes(query));
-            displayData(filtered);
+            const type = document.getElementById('filterType').value;
+            let filtered = allData.filter(item => {
+                const matchSearch = item.name.toLowerCase().includes(query);
+                if (type === 'active') return matchSearch && item.saldo > 0;
+                if (type === 'zero') return matchSearch && item.saldo === 0;
+                return matchSearch;
+            });
+            render(filtered);
         }
 
-        function formatIDR(num) {
-            return "Rp " + new Intl.NumberFormat('id-ID').format(num);
-        }
-
-        // Jalankan & Interval
-        loadSheetData();
-        setInterval(loadSheetData, 60000);
+        init();
+        setInterval(init, 30000); // Update dipercepat jadi 30 detik untuk alert yang lebih cepat
     </script>
 </body>
 </html>
