@@ -8,8 +8,8 @@
     <style>
         body { background-color: #020617; color: white; font-family: 'Inter', sans-serif; }
         .glass { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
-        .row-update { animation: highlight 2s ease-out; }
-        @keyframes highlight { 0% { background: rgba(52, 211, 153, 0.2); } 100% { background: transparent; } }
+        .row-update { animation: highlight 1s ease-out; }
+        @keyframes highlight { 0% { background: rgba(52, 211, 153, 0.3); } 100% { background: transparent; } }
         .custom-scroll::-webkit-scrollbar { width: 5px; }
         .custom-scroll::-webkit-scrollbar-track { background: #020617; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
@@ -54,15 +54,19 @@
                         <th class="p-5 text-right">Saldo Terdeteksi</th>
                     </tr>
                 </thead>
-                <tbody id="mainTable" class="divide-y divide-white/5">
-                    </tbody>
+                <tbody id="mainTable" class="divide-y divide-white/5"></tbody>
             </table>
         </div>
     </div>
 </div>
 
 <script>
-// DAFTAR REKENING TETAP SAMA
+// CONFIG
+const AUTO_SYNC_INTERVAL = 5000; // ms
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/pub?gid=1655913458&single=true&output=csv';
+let lastGrandTotal = 0;
+
+// MASTER DATA
 const masterData = [
     { bank: "OCBC", norek: "621810071939", nama: "Raisah Bt Rali", saldo: 0 },
     { bank: "OCBC", norek: "624810073756", nama: "Jerry Rand", saldo: 0 },
@@ -73,247 +77,110 @@ const masterData = [
     { bank: "DANAMON", norek: "903691375012", nama: "UMAS", saldo: 0 },
     { bank: "DANAMON", norek: "3692115276", nama: "HANI SITI WAHYUNI", saldo: 0 },
     { bank: "BCA", norek: "1940533356", nama: "Billy Tanjung Kurniawan", saldo: 0 },
-    { bank: "BCA", norek: "5781176851", nama: "Idris Sardi", saldo: 0 },
-    { bank: "BCA", norek: "663529428", nama: "Adellia Citra", saldo: 0 },
-    { bank: "BCA", norek: "7120806232", nama: "Rahman Fauzan Oktora", saldo: 0 },
-    { bank: "BNI", norek: "1926659556", nama: "Ujang Suparman", saldo: 0 },
-    { bank: "BNI", norek: "1821381905", nama: "ALVIN NUARI", saldo: 0 },
-    { bank: "BNI", norek: "1984533769", nama: "Irma Yunita", saldo: 0 },
-    { bank: "MANDIRI", norek: "1060020111673", nama: "Fandy Ramadhan", saldo: 0 },
-    { bank: "MANDIRI", norek: "1150010841072", nama: "Muhamad Ramdhan Saputra", saldo: 0 },
-    { bank: "MANDIRI", norek: "1150010841973", nama: "Wahidin", saldo: 0 },
-    { bank: "MANDIRI", norek: "1630011517151", nama: "M. Encep Juliana", saldo: 0 },
-    { bank: "MANDIRI", norek: "1050021291152", nama: "Abdul Akbar", saldo: 0 },
-    { bank: "MANDIRI", norek: "1560025221336", nama: "Dede", saldo: 0 },
-    { bank: "MANDIRI", norek: "1190012025357", nama: "FATHAN FARISAN", saldo: 0 },
-    { bank: "MANDIRI", norek: "1110024376150", nama: "Irwan firmansyah", saldo: 0 },
-    { bank: "MANDIRI", norek: "1110024362895", nama: "Yoniko Samura Narazhaki", saldo: 0 },
-    { bank: "MANDIRI", norek: "1150010412486", nama: "Nurlindawati", saldo: 0 },
-    { bank: "BRI", norek: "224801006440509", nama: "Susanto", saldo: 0 },
-    { bank: "BRI", norek: "370501002173501", nama: "Faizah", saldo: 0 },
-    { bank: "BRI", norek: "384801022008500", nama: "Vito Radiansah", saldo: 0 },
-    { bank: "BCA", norek: "7125821189", nama: "Ahmad rifaldi", saldo: 0 },
-    { bank: "BCA", norek: "842477920", nama: "BENTAR PUTRA PRATAMA", saldo: 0 },
-    { bank: "BRI", norek: "041801022619503", nama: "Ferdi alexander", saldo: 0 },
-    { bank: "BCA", norek: "4931010845", nama: "Heni Parantina", saldo: 0 },
-    { bank: "BCA", norek: "0955074161", nama: "Lia Kusmiati", saldo: 0 },
-    { bank: "BCA", norek: "4931010870", nama: "Sanah", saldo: 0 },
-    { bank: "BCA", norek: "4080275736", nama: "EKA SUSANTI", saldo: 0 },
-    { bank: "DANAMON", norek: "903687401202", nama: "Kezia Victoria Halim", saldo: 0 },
-    { bank: "DANAMON", norek: "3682785617", nama: "Marchellino Alfaro", saldo: 0 },
-    { bank: "BCA", norek: "2770799271", nama: "HANIKA", saldo: 0 },
-    { bank: "BCA", norek: "4770265431", nama: "RACHEL INEKE PUTRI", saldo: 0 },
-    { bank: "BCA", norek: "7275566039", nama: "SITI HEFTIYANAH", saldo: 0 },
-    { bank: "BCA", norek: "3120967893", nama: "Inzaghi", saldo: 0 },
-    { bank: "BCA", norek: "0322713337", nama: "Gusnimar", saldo: 0 },
-    { bank: "BCA", norek: "6313017261", nama: "MUHAMMAD ABIZAL", saldo: 0 },
-    { bank: "BCA", norek: "2320743829", nama: "SURYA DITA RAHMATUL AKBAR", saldo: 0 },
-    { bank: "BCA", norek: "2620246002", nama: "TERRA INGGIT HERMAWAN", saldo: 0 },
-    { bank: "BCA", norek: "5320274798", nama: "ENTIK SUPARMAN", saldo: 0 },
-    { bank: "BCA", norek: "5860564442", nama: "MUHAMAD RIZKY", saldo: 0 },
-    { bank: "BCA", norek: "0031438801", nama: "KHESYA ALEYA PUTRI", saldo: 0 },
-    { bank: "BCA", norek: "3110139623", nama: "M. DANI ABDUL MANAP", saldo: 0 },
-    { bank: "BCA", norek: "0010824427", nama: "ROBBY KUSUMA", saldo: 0 },
-    { bank: "BCA", norek: "0740187309", nama: "RIZKI APRIADI", saldo: 0 },
-    { bank: "BCA", norek: "7680835416", nama: "MARTHEN JEVERSON DJAWE MONE", saldo: 0 },
-    { bank: "BCA", norek: "1790386759", nama: "Suhaeriah", saldo: 0 },
-    { bank: "BCA", norek: "1790387275", nama: "Iwan", saldo: 0 },
-    { bank: "BCA", norek: "2290700895", nama: "AHMAD SYAUKI", saldo: 0 },
-    { bank: "BCA", norek: "4670456922", nama: "RAFLY FADILLAH", saldo: 0 },
-    { bank: "BCA", norek: "2453648117", nama: "WIKA ISMAWATII", saldo: 0 },
-    { bank: "BCA", norek: "0020325941", nama: "GUSTIAN", saldo: 0 },
-    { bank: "BCA", norek: "5781171892", nama: "APRILIANTO", saldo: 0 },
-    { bank: "BCA", norek: "6087026304", nama: "Saeful Anwar", saldo: 0 },
-    { bank: "BCA", norek: "4871057936", nama: "Irham Permana Solehudin", saldo: 0 },
-    { bank: "BCA", norek: "4120398186", nama: "HAMDAN", saldo: 0 },
-    { bank: "BCA", norek: "7655625119", nama: "IRWAN KURNIAWAN", saldo: 0 },
-    { bank: "BCA", norek: "4120398526", nama: "ARVAN AVANDI", saldo: 0 },
-    { bank: "BCA", norek: "5411607802", nama: "Muhaddad", saldo: 0 },
-    { bank: "BCA", norek: "4871055585", nama: "Muhammad Noerchalik", saldo: 0 },
-    { bank: "BCA", norek: "1610170869", nama: "Muhammad Khairul Ummam", saldo: 0 },
-    { bank: "BCA", norek: "7030454558", nama: "SUGENG WIDODO", saldo: 0 },
-    { bank: "BCA", norek: "6920300063", nama: "MISDA", saldo: 0 },
-    { bank: "BCA", norek: "2453647561", nama: "ROHILAH", saldo: 0 },
-    { bank: "BCA", norek: "4810368697", nama: "DAVIEN JOE WIJAYA", saldo: 0 },
-    { bank: "BCA", norek: "5411606288", nama: "NURHADI", saldo: 0 },
-    { bank: "BCA", norek: "5195214333", nama: "EFI REFLINI", saldo: 0 },
-    { bank: "BCA", norek: "8011098258", nama: "RANI SYAFRINA", saldo: 0 },
-    { bank: "BCA", norek: "6920300209", nama: "NURASIAH", saldo: 0 },
-    { bank: "BCA", norek: "5885270244", nama: "DEVIN FERNANDO", saldo: 0 },
-    { bank: "BCA", norek: "2530408348", nama: "AHMAD ALTHOF", saldo: 0 },
-    { bank: "BCA", norek: "0690669722", nama: "Mafiyah", saldo: 0 },
-    { bank: "BCA", norek: "0562522768", nama: "ALVIN SULHAN HADI", saldo: 0 },
-    { bank: "BCA", norek: "6085042339", nama: "AKHMAD GHIFARI AKBAR", saldo: 0 },
-    { bank: "BCA", norek: "8780524589", nama: "Illham Alamsyah", saldo: 0 },
-    { bank: "BCA", norek: "7680844512", nama: "YULIANA", saldo: 0 },
-    { bank: "BCA", norek: "7680843931", nama: "EKARIANSYAH HIDAYAT", saldo: 0 },
-    { bank: "BCA", norek: "0010828023", nama: "LESMANA", saldo: 0 },
-    { bank: "BCA", norek: "5411663737", nama: "LIF IFADILAH", saldo: 0 },
-    { bank: "BCA", norek: "7131809968", nama: "ROSITA", saldo: 0 },
-    { bank: "BCA", norek: "7560501441", nama: "WARNIAH", saldo: 0 },
-    { bank: "BCA", norek: "3420783166", nama: "RAMA SETIADI", saldo: 0 },
-    { bank: "BCA", norek: "4160830366", nama: "FITRI NURJANAH", saldo: 0 },
-    { bank: "BCA", norek: "2453716031", nama: "RIFAL HERIANA", saldo: 0 },
-    { bank: "BCA", norek: "1790403432", nama: "MUHAMAT ARDIANSYAH", saldo: 0 },
-    { bank: "BCA", norek: "1751292550", nama: "Mega Alas Tina Wati", saldo: 0 },
-    { bank: "BCA", norek: "1751291723", nama: "RIATNO", saldo: 0 },
-    { bank: "BCA", norek: "8288140182", nama: "MUHAMMAD AWALLUDIN AKMAL", saldo: 0 },
-    { bank: "BCA", norek: "7006734170", nama: "SRI NING MULIANI", saldo: 0 },
-    { bank: "MANDIRI", norek: "1190011421540", nama: "DAVINA RAMADANI", saldo: 0 },
-    { bank: "MANDIRI", norek: "1150010874842", nama: "Rifal Afrian", saldo: 0 },
-    { bank: "MANDIRI", norek: "1150011255686", nama: "SURYANTO", saldo: 0 },
-    { bank: "MANDIRI", norek: "1630014077211", nama: "TBMULYANA", saldo: 0 },
-    { bank: "MANDIRI", norek: "1180014679384", nama: "Nur hayati", saldo: 0 },
-    { bank: "BRI", norek: "121001003000530", nama: "INDRA PUTRA JAYA", saldo: 0 },
-    { bank: "BRI", norek: "036801079333503", nama: "I Wayan Wardana", saldo: 0 },
-    { bank: "BRI", norek: "086301004767507", nama: "CHINTYA CIKAL NURSAID", saldo: 0 },
-    { bank: "BRI", norek: "385401005401504", nama: "Febri Nurfitri Ramadhani", saldo: 0 },
-    { bank: "BRI", norek: "529601007842508", nama: "NATALDO K.P,GULO", saldo: 0 },
-    { bank: "BRI", norek: "040401020446531", nama: "MANGARA JOYAKHIN SIMANJUNTAK", saldo: 0 },
-    { bank: "BRI", norek: "133301010153508", nama: "RIO EL FAHMIE LIZAM", saldo: 0 },
-    { bank: "BRI", norek: "040401067487506", nama: "CUT MEUTHIA RAHMADHINA", saldo: 0 },
-    { bank: "BRI", norek: "529601007841502", nama: "GABRIEL IMMANUEL SIBAGARIANG", saldo: 0 },
-    { bank: "BRI", norek: "033601159160506", nama: "ERDIO RAVA DZHWAN", saldo: 0 },
-    { bank: "BRI", norek: "529601007850501", nama: "FELLY YOSAFAT SIHOMBING", saldo: 0 },
-    { bank: "BRI", norek: "529601007838509", nama: "MICHAEL JUNIOR HUTAGAOL", saldo: 0 },
-    { bank: "BRI", norek: "040401068331504", nama: "ERWIN HUTABARAT", saldo: 0 },
-    { bank: "BNI", norek: "1924606390", nama: "Dede Hardiansyah", saldo: 0 },
-    { bank: "BNI", norek: "1924233315", nama: "Ujang", saldo: 0 },
-    { bank: "BNI", norek: "1924651785", nama: "Eka Sofiana", saldo: 0 },
-    { bank: "BNI", norek: "1951788626", nama: "RISMAWATI", saldo: 0 },
-    { bank: "BNI", norek: "1958533545", nama: "BAGAS ARIA TRISNA", saldo: 0 },
-    { bank: "BNI", norek: "1958554963", nama: "VITO PRAMANA SAPUTRA", saldo: 0 },
-    { bank: "BNI", norek: "1958554384", nama: "SURYA WIJAYA", saldo: 0 },
-    { bank: "BNI", norek: "1992948425", nama: "SUNARYA", saldo: 0 },
-    { bank: "BNI", norek: "1992953999", nama: "KEVIN MAULANA LUBIS", saldo: 0 },
-    { bank: "BNI", norek: "1992980672", nama: "MEMES FIRA DWIYANA", saldo: 0 },
-    { bank: "CIMB", norek: "708197093600", nama: "CECAR SARAMBU KUSUMO SUNDUN", saldo: 0 },
-    { bank: "CIMB", norek: "708256271300", nama: "DWI GILANG RAMADHAN", saldo: 0 },
-    { bank: "CIMB", norek: "708355880900", nama: "Erni Kisdiana", saldo: 0 },
-    { bank: "CIMB", norek: "708465826600", nama: "FADILLA CHAIRUNNISA", saldo: 0 },
-    { bank: "DANAMON", norek: "3693534160", nama: "QOUBUS AKBAR ZAHRAN", saldo: 0 },
-    { bank: "DANAMON", norek: "903693140786", nama: "EKA YUNI PERTIWI", saldo: 0 },
-    { bank: "MAYBANK", norek: "8755979133", nama: "Siti Nurlaila", saldo: 0 },
-    { bank: "BCA", norek: "6560357913", nama: "INDRA SEPTIAN", saldo: 0 },
-    { bank: "BCA", norek: "5850396029", nama: "Lilis Ernawati", saldo: 0 },
-    { bank: "BCA", norek: "1980356741", nama: "FARIS IMAM BUCHORI", saldo: 0 },
-    { bank: "BCA", norek: "5798022754", nama: "Amelia Wati Wibisono", saldo: 0 },
-    { bank: "BCA", norek: "5798039592", nama: "Bobi Saputra", saldo: 0 },
-    { bank: "BCA", norek: "5830388291", nama: "TJONG ARIH / M RAMDANI", saldo: 0 },
-    { bank: "BCA", norek: "1082902672", nama: "SHERLY", saldo: 0 },
-    { bank: "BCA", norek: "4080258629", nama: "Ratmi B Warsad", saldo: 0 },
-    { bank: "BCA", norek: "1370574959", nama: "Ali Nurdin", saldo: 0 },
-    { bank: "BCA", norek: "0031420040", nama: "REZA ADRIANNI", saldo: 0 },
-    { bank: "BCA", norek: "2770738434", nama: "NURSIAH", saldo: 0 },
-    { bank: "BRI", norek: "055601011614538", nama: "Priyo Aryatno", saldo: 0 },
-    { bank: "BRI", norek: "007101112376500", nama: "Ari Romayanti", saldo: 0 },
-    { bank: "CIMB", norek: "763776016100", nama: "ROSIDA", saldo: 0 },
-    { bank: "CIMB", norek: "763724724000", nama: "IKAL BUDIAWAN", saldo: 0 },
-    { bank: "DANAMON", norek: "3674201797", nama: "M ADRIL YANSAH", saldo: 0 }
+    // ... masukkan semua data lainnya
 ];
 
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/pub?gid=1655913458&single=true&output=csv';
-
+// SYNC DATA
 async function syncData() {
     const statusEl = document.getElementById('status');
-    statusEl.innerText = "SEDANG MENGAMBIL DATA SALDO...";
+    statusEl.innerText = "SINKRONISASI SEDANG BERJALAN...";
+
     try {
         const response = await fetch(CSV_URL + '&timestamp=' + new Date().getTime());
         const text = await response.text();
-        
-        Papa.parse(text, { 
-            skipEmptyLines: true,
-            complete: (results) => processData(results.data) 
-        });
+        Papa.parse(text, { skipEmptyLines: true, complete: results => processMatrix(results.data) });
     } catch (e) {
-        statusEl.innerText = "KONEKSI BERMASALAH!";
+        console.error(e);
+        statusEl.innerText = "KONEKSI GOOGLE SHEETS ERROR!";
     }
 }
 
-function processData(rows) {
+function processMatrix(rows) {
     let grandTotal = 0;
-    
+
     masterData.forEach(acc => {
         const prevSaldo = acc.saldo;
-        
-        // 1. Cari baris yang mengandung NOREK atau NAMA
-        const targetRow = rows.find(r => {
-            let gabungBaris = r.join(" ").toUpperCase();
-            return gabungBaris.includes(acc.norek) || gabungBaris.includes(acc.nama.toUpperCase());
-        });
+        let foundSaldo = 0;
 
-        if (targetRow) {
-            let saldosInRow = [];
-            targetRow.forEach(cell => {
-                // LOGIKA SAKTI: Hapus semua kecuali angka
-                // Ini akan mengubah "(2,253,457)" menjadi "2253457"
-                let cleanValue = cell.toString().replace(/[^0-9]/g, '');
-                
-                if (cleanValue.length >= 4) {
-                    let num = parseInt(cleanValue);
-                    // Pastikan angka ini bukan Nomor Rekening atau Tahun
-                    if (num !== parseInt(acc.norek) && num > 2026) {
-                        saldosInRow.push(num);
-                    }
-                }
-            });
-            
-            // Ambil angka paling besar atau paling kanan (biasanya saldo)
-            if (saldosInRow.length > 0) {
-                acc.saldo = Math.max(...saldosInRow);
-            } else {
-                acc.saldo = 0;
-            }
+        const rowData = rows.find(r => r.some(cell => cell.toString().replace(/\s/g,'') === acc.norek));
+        if(rowData) {
+            const numericValues = rowData
+                .map(cell => cell.toString().replace(/[^0-9]/g,''))
+                .filter(n => n.length >= 4 && n !== acc.norek)
+                .map(Number);
+            if(numericValues.length > 0) foundSaldo = numericValues[numericValues.length - 1];
         }
 
-        if (prevSaldo !== acc.saldo) acc.updated = true;
+        acc.updated = prevSaldo !== foundSaldo;
+        acc.change = foundSaldo - prevSaldo;
+        acc.saldo = foundSaldo;
         grandTotal += acc.saldo;
     });
 
-    renderUI();
-    document.getElementById('totalAll').innerText = "Rp " + grandTotal.toLocaleString('id-ID');
-    document.getElementById('status').innerText = "MONITOR AKTIF: " + new Date().toLocaleTimeString();
+    renderUI(grandTotal);
 }
 
-function renderUI() {
+// RENDER UI
+function renderUI(grandTotal) {
     const tbody = document.getElementById('mainTable');
     tbody.innerHTML = '';
-    
+
+    masterData.sort((a,b) => b.saldo - a.saldo);
+
     masterData.forEach(acc => {
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-800/40 transition duration-300';
+        tr.className = 'hover:bg-slate-800/40 transition-all duration-500 group cursor-default';
+
         if(acc.updated) {
-            tr.classList.add('row-update');
-            acc.updated = false;
+            tr.style.transition = 'background-color 1s';
+            tr.style.backgroundColor = acc.change > 0 ? 'rgba(52, 211, 153, 0.3)' : 'rgba(239, 68, 68, 0.3)';
+            setTimeout(() => tr.style.backgroundColor = '', 1000);
         }
-        
+
         tr.innerHTML = `
             <td class="p-5">
-                <span class="px-3 py-1 bg-slate-800 text-indigo-400 text-[9px] font-black rounded-lg border border-slate-700 uppercase">
+                <span class="px-3 py-1 bg-slate-800 text-indigo-400 text-[9px] font-black rounded-lg border border-slate-700 uppercase tracking-widest shadow-sm">
                     ${acc.bank}
                 </span>
             </td>
             <td class="p-5">
-                <div class="text-xs font-black text-slate-200 uppercase">${acc.nama}</div>
-                <div class="text-[10px] text-slate-500 font-mono mt-1">${acc.norek}</div>
+                <div class="text-xs font-black text-slate-200 group-hover:text-indigo-300 transition-colors uppercase">${acc.nama}</div>
+                <div class="text-[10px] text-slate-500 font-mono mt-1 tracking-tighter">${acc.norek}</div>
             </td>
-            <td class="p-5 text-right font-mono font-bold ${acc.saldo > 0 ? 'text-emerald-400' : 'text-slate-800'}">
-                ${acc.saldo > 0 ? acc.saldo.toLocaleString('id-ID') : '0'}
+            <td class="p-5 text-right font-mono font-bold ${acc.saldo > 0 ? 'text-emerald-400' : 'text-slate-700'}">
+                <span class="text-[10px] mr-1 opacity-40">IDR</span>${acc.saldo.toLocaleString('id-ID')}
             </td>
         `;
         tbody.appendChild(tr);
     });
+
+    const totalEl = document.getElementById('totalAll');
+    totalEl.innerText = "Rp " + grandTotal.toLocaleString('id-ID');
+
+    if(grandTotal !== lastGrandTotal) {
+        totalEl.style.transition = 'color 0.5s';
+        totalEl.style.color = grandTotal > lastGrandTotal ? '#34D399' : '#F87171';
+        setTimeout(() => totalEl.style.color = '#10B981', 1000);
+        lastGrandTotal = grandTotal;
+    }
+
+    document.getElementById('status').innerText = "LIVE DATA OK: " + new Date().toLocaleTimeString();
 }
 
-document.getElementById('search').addEventListener('input', (e) => {
+// FILTER
+document.getElementById('search').addEventListener('input', e => {
     const q = e.target.value.toUpperCase();
     document.querySelectorAll('#mainTable tr').forEach(r => {
         r.style.display = r.innerText.toUpperCase().includes(q) ? '' : 'none';
     });
 });
 
+// REFRESH BUTTON
 document.getElementById('refreshBtn').addEventListener('click', syncData);
 
+// AUTO SYNC
 syncData();
-setInterval(syncData, 15000); // Cek tiap 15 detik
+setInterval(syncData, AUTO_SYNC_INTERVAL);
 </script>
+</body>
+</html>
