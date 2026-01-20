@@ -10,81 +10,92 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
         :root { --bg: #020617; --accent: #6366f1; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: #f8fafc; overflow: hidden; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: #f8fafc; height: 100vh; overflow: hidden; }
         .mono { font-family: 'JetBrains Mono', monospace; }
         .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
         .table-scroll { height: calc(100vh - 280px); overflow-y: auto; }
-        .table-scroll::-webkit-scrollbar { width: 3px; }
-        .table-scroll::-webkit-scrollbar-thumb { background: #334155; }
+        .table-scroll::-webkit-scrollbar { width: 4px; }
+        .table-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         .status-pulse { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        .row-update { animation: flash 1s ease-out; }
-        @keyframes flash { from { background: rgba(16, 185, 129, 0.2); } to { background: transparent; } }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
+        .row-update { animation: flash 1.5s ease-out; }
+        @keyframes flash { from { background: rgba(99, 102, 241, 0.2); } to { background: transparent; } }
+        .active-glow { box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); border-left: 3px solid #10b981 !important; }
     </style>
 </head>
-<body class="p-6">
+<body class="p-4 md:p-6">
 
-    <div class="max-w-[1700px] mx-auto flex flex-col gap-6 h-full">
-        <header class="flex items-center justify-between">
+    <div class="max-w-[1800px] mx-auto flex flex-col gap-6 h-full">
+        <header class="flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                    <i class="fas fa-server text-white text-xl"></i>
+                <div class="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-500/20">
+                    <i class="fas fa-shield-halved text-white text-2xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-black tracking-tighter">TVTOTO <span class="text-indigo-500">ULTRAS</span></h1>
+                    <h1 class="text-3xl font-black tracking-tighter italic">TVTOTO <span class="text-indigo-500 underline decoration-indigo-500/30">ULTRA</span></h1>
                     <div class="flex items-center gap-2">
-                        <span id="syncStatus" class="flex items-center gap-1.5 text-[10px] font-bold text-emerald-500 uppercase">
-                            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full status-pulse"></span> System Live
+                        <span id="syncStatus" class="flex items-center gap-1.5 text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full status-pulse"></span> Security Protocol Active
                         </span>
                     </div>
                 </div>
             </div>
 
-            <div class="flex gap-4">
-                <div class="glass px-6 py-3 rounded-2xl border-l-4 border-indigo-500">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Global Balance</p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <div class="glass px-6 py-3 rounded-2xl border-b-4 border-indigo-500 min-w-[200px]">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Global Balance</p>
                     <h2 id="totalAll" class="text-2xl font-black mono text-white">Rp 0</h2>
                 </div>
-                <div class="glass px-6 py-3 rounded-2xl border-l-4 border-emerald-500">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Active Nodes</p>
-                    <h2 id="nodeCount" class="text-2xl font-black mono text-white">0</h2>
+                <div class="glass px-6 py-3 rounded-2xl border-b-4 border-emerald-500 min-w-[140px]">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Active / Total</p>
+                    <h2 id="nodeStats" class="text-2xl font-black mono text-white">0 / 0</h2>
                 </div>
             </div>
         </header>
 
         <div class="grid grid-cols-12 gap-6 overflow-hidden flex-1">
-            <div class="col-span-3 flex flex-col gap-6">
-                <div class="glass rounded-3xl p-6 overflow-hidden">
-                    <h3 class="text-xs font-black text-slate-500 uppercase mb-4 tracking-widest">Bank Network</h3>
-                    <div id="bankStats" class="space-y-4"></div>
+            <div class="col-span-12 lg:col-span-3 flex flex-col gap-6 overflow-hidden">
+                <div class="glass rounded-3xl p-6">
+                    <h3 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest flex items-center gap-2">
+                        <i class="fas fa-chart-pie text-indigo-500"></i> Distribution
+                    </h3>
+                    <div id="bankStats" class="space-y-4 max-h-[250px] overflow-y-auto pr-2"></div>
                 </div>
+                
                 <div class="glass rounded-3xl p-6 flex-1 overflow-hidden flex flex-col">
-                    <h3 class="text-xs font-black text-slate-500 uppercase mb-4 tracking-widest">Live Activity</h3>
-                    <div id="logs" class="text-[10px] mono text-slate-500 space-y-2 overflow-y-auto"></div>
+                    <h3 class="text-xs font-black text-slate-400 uppercase mb-4 tracking-widest flex items-center justify-between">
+                        <span>Terminal Logs</span>
+                        <span class="text-[9px] bg-white/5 px-2 py-0.5 rounded">REALTIME</span>
+                    </h3>
+                    <div id="logs" class="text-[11px] mono text-slate-400 space-y-3 overflow-y-auto scrollbar-hide"></div>
                 </div>
             </div>
 
-            <div class="col-span-9 glass rounded-[2rem] flex flex-col overflow-hidden border border-white/5">
-                <div class="p-6 bg-white/5 border-b border-white/5 flex justify-between items-center">
-                    <div class="relative w-96">
+            <div class="col-span-12 lg:col-span-9 glass rounded-[2.5rem] flex flex-col overflow-hidden border border-white/5 relative">
+                <div class="p-6 bg-white/[0.02] border-b border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="relative w-full md:w-96">
                         <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                        <input type="text" id="search" onkeyup="filter()" placeholder="Search terminal..." class="w-full bg-slate-950 border border-white/10 rounded-xl py-2.5 pl-12 pr-4 text-sm focus:border-indigo-500 outline-none">
+                        <input type="text" id="search" onkeyup="filter()" placeholder="Search Identity or Account..." class="w-full bg-slate-950/50 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm focus:border-indigo-500 transition-all outline-none focus:ring-4 focus:ring-indigo-500/10">
                     </div>
-                    <button onclick="syncData()" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
-                        <i class="fas fa-sync-alt"></i> FORCE SYNC
-                    </button>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <button onclick="syncData()" class="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-500 px-6 py-3 rounded-2xl text-xs font-black tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20">
+                            <i class="fas fa-rotate"></i> SYNC ENGINE
+                        </button>
+                    </div>
                 </div>
+
                 <div class="table-scroll">
                     <table class="w-full text-left border-collapse">
-                        <thead class="sticky top-0 bg-slate-900 z-10">
+                        <thead class="sticky top-0 bg-slate-900/95 backdrop-blur-md z-10">
                             <tr class="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5">
-                                <th class="p-5">Bank</th>
-                                <th class="p-5">Account Name / Identity</th>
-                                <th class="p-5 text-right">Current Balance</th>
-                                <th class="p-5 text-center">Protocol</th>
+                                <th class="p-6">Network Unit</th>
+                                <th class="p-6">Account Identity</th>
+                                <th class="p-6 text-right">Current Balance</th>
+                                <th class="p-6 text-center">Status</th>
                             </tr>
                         </thead>
-                        <tbody id="mainTable" class="divide-y divide-white/[0.02]"></tbody>
+                        <tbody id="mainTable" class="divide-y divide-white/[0.02]">
+                            </tbody>
                     </table>
                 </div>
             </div>
@@ -94,7 +105,6 @@
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSsnosH5qmA4ADdf2nPeM7k1JdZI-RDhgA4Y8GgSmB5Qs-9MCaaEdeykDzRGFjjcrjhotKKSyd5J_D0/pub?gid=1655913458&single=true&output=csv';
         
-        // Database Data Terintegrasi
         let masterNodes = [
             { bank: "OCBC", norek: "621810071939", nama: "Raisah Bt Rali" },
             { bank: "OCBC", norek: "624810073756", nama: "Jerry Rand" },
@@ -244,43 +254,50 @@
             { bank: "DANAMON", norek: "3674201797", nama: "BANK WD DANAMON G1 / M ADRIL YANSAH" }
         ].map(node => ({...node, saldo: 0, lastSaldo: 0}));
 
-        // Engine Utama
         async function syncData() {
-            log("Memulai sinkronisasi global...");
+            log("Initializing Global Engine Sync...", "text-indigo-400");
             try {
                 const res = await fetch(`${CSV_URL}&t=${Date.now()}`);
                 const text = await res.text();
                 Papa.parse(text, {
-                    complete: (results) => processSync(results.data)
+                    complete: (results) => processSync(results.data),
+                    error: (err) => log("Parser Error: " + err, "text-red-500")
                 });
-            } catch (e) { log("Error koneksi: " + e.message); }
+            } catch (e) { log("Connection Error: " + e.message, "text-red-500"); }
         }
 
         function processSync(rows) {
             let total = 0;
+            let activeNodes = 0;
+            
             masterNodes.forEach(node => {
                 node.lastSaldo = node.saldo;
                 node.saldo = 0;
                 
-                // Cari baris data
+                const cleanName = node.nama.split('/')[0].trim().toUpperCase();
                 const row = rows.find(r => 
-                    r.some(cell => cell && cell.toString().toUpperCase().includes(node.nama.toUpperCase().split('/')[0].trim()))
+                    r.some(cell => cell && cell.toString().toUpperCase().includes(cleanName))
                 );
 
                 if (row) {
-                    let vals = [];
-                    row.forEach(c => {
-                        let n = c.toString().replace(/[^\d]/g, '');
-                        if (n.length >= 4 && n.length <= 12 && n !== node.norek) vals.push(parseInt(n));
+                    let numbers = [];
+                    row.forEach(cell => {
+                        let val = cell.toString().replace(/[^\d]/g, '');
+                        if (val.length >= 4 && val !== node.norek) {
+                            numbers.push(parseInt(val));
+                        }
                     });
-                    node.saldo = vals.length > 0 ? vals[vals.length - 1] : 0;
+                    node.saldo = numbers.length > 0 ? numbers[numbers.length - 1] : 0;
                 }
+                
+                if(node.saldo > 0) activeNodes++;
                 total += node.saldo;
             });
+
             render();
-            document.getElementById('totalAll').innerText = formatIDR(total);
-            document.getElementById('nodeCount').innerText = masterNodes.length;
-            log("Sinkronisasi selesai. " + masterNodes.length + " terminal dipindai.");
+            animateValue("totalAll", total);
+            document.getElementById('nodeStats').innerText = `${activeNodes} / ${masterNodes.length}`;
+            log(`Sync Completed. Found ${activeNodes} active terminals.`, "text-emerald-500");
         }
 
         function render() {
@@ -290,28 +307,37 @@
             stats.innerHTML = '';
             
             let bStats = {};
+            
             masterNodes.forEach(node => {
                 bStats[node.bank] = (bStats[node.bank] || 0) + 1;
                 const isChanged = node.saldo !== node.lastSaldo;
+                const hasBalance = node.saldo > 0;
                 
                 table.innerHTML += `
-                    <tr class="${isChanged ? 'row-update' : ''} hover:bg-white/[0.02]">
-                        <td class="p-5">
-                            <span class="text-[10px] font-black px-2 py-1 bg-indigo-500/10 text-indigo-400 rounded-lg border border-indigo-500/20 uppercase">
+                    <tr class="${isChanged ? 'row-update' : ''} ${hasBalance ? 'active-glow bg-emerald-500/5' : ''} hover:bg-white/[0.03] transition-colors">
+                        <td class="p-6">
+                            <span class="text-[10px] font-black px-3 py-1.5 ${hasBalance ? 'bg-emerald-500/20 text-emerald-400' : 'bg-indigo-500/10 text-indigo-400'} rounded-lg border border-white/5 uppercase">
                                 ${node.bank}
                             </span>
                         </td>
-                        <td class="p-5">
+                        <td class="p-6">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-slate-200 uppercase">${node.nama}</span>
-                                <span class="text-[10px] mono text-slate-500 tracking-widest">${node.norek}</span>
+                                <span class="text-sm font-bold ${hasBalance ? 'text-white' : 'text-slate-300'} uppercase">${node.nama}</span>
+                                <button onclick="copyText('${node.norek}')" class="text-left text-[10px] mono text-slate-500 hover:text-indigo-400 transition-colors tracking-widest uppercase">
+                                    <i class="far fa-copy mr-1"></i> ${node.norek}
+                                </button>
                             </div>
                         </td>
-                        <td class="p-5 text-right font-black mono text-lg ${node.saldo > 0 ? 'text-emerald-400' : 'text-slate-700'}">
+                        <td class="p-6 text-right font-black mono text-xl ${hasBalance ? 'text-emerald-400' : 'text-slate-700'}">
                             ${formatIDR(node.saldo)}
                         </td>
-                        <td class="p-5 text-center">
-                            <div class="w-2 h-2 rounded-full mx-auto ${node.saldo > 0 ? 'bg-emerald-500 shadow-[0_0_8px_emerald]' : 'bg-slate-800'}"></div>
+                        <td class="p-6 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <div class="w-2.5 h-2.5 rounded-full ${hasBalance ? 'bg-emerald-500 shadow-[0_0_12px_#10b981]' : 'bg-slate-800'}"></div>
+                                <span class="text-[9px] font-bold ${hasBalance ? 'text-emerald-500' : 'text-slate-700'} uppercase">
+                                    ${hasBalance ? 'Priority' : 'Idle'}
+                                </span>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -320,33 +346,62 @@
             Object.entries(bStats).sort((a,b) => b[1] - a[1]).forEach(([name, count]) => {
                 const p = (count / masterNodes.length) * 100;
                 stats.innerHTML += `
-                    <div>
-                        <div class="flex justify-between text-[10px] font-bold text-slate-500 mb-1 uppercase">
-                            <span>${name}</span><span>${count} Terminal</span>
+                    <div class="group">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-500 mb-1.5 uppercase group-hover:text-slate-300 transition-colors">
+                            <span>${name}</span><span>${count} Units</span>
                         </div>
-                        <div class="h-1 bg-slate-800 rounded-full overflow-hidden">
-                            <div class="h-full bg-indigo-500" style="width: ${p}%"></div>
+                        <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-indigo-600 to-blue-400 transition-all duration-1000" style="width: ${p}%"></div>
                         </div>
                     </div>
                 `;
             });
         }
 
-        function formatIDR(v) { return "Rp " + new Intl.NumberFormat('id-ID').format(v); }
-        function log(m) {
-            const l = document.getElementById('logs');
-            l.innerHTML = `<div class="border-l-2 border-indigo-500 pl-2 opacity-80">[${new Date().toLocaleTimeString()}] ${m}</div>` + l.innerHTML;
-        }
-        function filter() {
-            const v = document.getElementById('search').value.toLowerCase();
-            document.querySelectorAll('#mainTable tr').forEach(r => r.style.display = r.innerText.toLowerCase().includes(v) ? '' : 'none');
+        function animateValue(id, end) {
+            const obj = document.getElementById(id);
+            const current = parseInt(obj.innerText.replace(/[^\d]/g, '')) || 0;
+            const range = end - current;
+            const duration = 1000;
+            let start = null;
+
+            function step(timestamp) {
+                if (!start) start = timestamp;
+                const progress = Math.min((timestamp - start) / duration, 1);
+                obj.innerText = formatIDR(Math.floor(current + (range * progress)));
+                if (progress < 1) window.requestAnimationFrame(step);
+            }
+            window.requestAnimationFrame(step);
         }
 
+        function formatIDR(v) { return "Rp " + new Intl.NumberFormat('id-ID').format(v); }
+        
+        function log(m, colorClass = "text-slate-400") {
+            const l = document.getElementById('logs');
+            const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
+            l.innerHTML = `
+                <div class="flex gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
+                    <span class="text-indigo-500/50">[${time}]</span>
+                    <span class="${colorClass}">${m}</span>
+                </div>` + l.innerHTML;
+            if(l.children.length > 50) l.lastElementChild.remove();
+        }
+
+        function copyText(text) {
+            navigator.clipboard.writeText(text);
+            log(`Copied Account: ${text}`, "text-indigo-300");
+        }
+
+        function filter() {
+            const v = document.getElementById('search').value.toLowerCase();
+            document.querySelectorAll('#mainTable tr').forEach(r => {
+                r.style.display = r.innerText.toLowerCase().includes(v) ? '' : 'none';
+            });
+        }
+
+        // Init
         syncData();
-        setInterval(syncData, 60000);
+        setInterval(syncData, 30000); // Sinkronisasi setiap 30 detik
     </script>
 </body>
 </html>
-
-
-
